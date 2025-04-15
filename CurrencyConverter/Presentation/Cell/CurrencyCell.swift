@@ -1,5 +1,5 @@
 //
-//  CurrencyTableViewCell.swift
+//  CurrencyCell.swift
 //  CurrencyConverter
 //
 //  Created by 서동환 on 4/15/25.
@@ -8,15 +8,15 @@
 import UIKit
 import SnapKit
 
-final class CurrencyTableViewCell: UITableViewCell {
+final class CurrencyCell: UITableViewCell {
     
-    static let identifier = "CurrencyTableViewCell"
+    static let identifier = "CurrencyCell"
     
     // MARK: - UI Components
     
     private let currencyCodeLabel = UILabel().then {
         $0.text = "KRW"
-        $0.font = .systemFont(ofSize: 17, weight: .semibold)
+        $0.font = .systemFont(ofSize: 17, weight: .medium)
     }
     
     private let exchangeRateLabel = UILabel().then {
@@ -38,7 +38,7 @@ final class CurrencyTableViewCell: UITableViewCell {
 
 // MARK: - UI Methods
 
-private extension CurrencyTableViewCell {
+private extension CurrencyCell {
     func setupUI() {
         setViewHierarchy()
         setConstraints()

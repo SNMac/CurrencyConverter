@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 import SnapKit
 import Then
 
@@ -14,9 +15,16 @@ import SwiftUI  // PreviewProvider 용도
 
 final class ViewController: UIViewController {
     
+    // MARK: - Properties
+    
+    private let viewModel = CurrencyViewModel()
+    private var disposeBag = DisposeBag()
+    
+    private var cellCount: Int = 0
+    
     // MARK: - UI Components
     
-    private lazy var currencyTableView = CurrencyTableView(frame: .zero, style: .plain).then {
+    private lazy var currencyTableView = CurrencyTableView(frame: .zero).then {
         $0.delegate = self
         $0.dataSource = self
     }
@@ -28,6 +36,7 @@ final class ViewController: UIViewController {
         self.view.backgroundColor = .systemBackground
         
         setupUI()
+        bind()
     }
 }
 
@@ -45,33 +54,45 @@ private extension ViewController {
     
     func setConstraints() {
         currencyTableView.snp.makeConstraints {
-            $0.edges.equalTo(self.view.safeAreaLayoutGuide)
+            $0.edges.equalToSuperview()
         }
     }
+    
+    func bind() {
+        viewModel.cellCount
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] cellCount in
+                self?.cellCount = cellCount
+            })
+            .disposed(by: disposeBag)
+    }
 }
+
+// MARK: - UITableViewDelegate
 
 extension ViewController: UITableViewDelegate {
     
 }
 
+// MARK: - UITableViewDataSource
+
 extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5
+        return cellCount
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: CurrencyTableViewCell.identifier, for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: CurrencyCell.identifier, for: indexPath)
         
         return cell
     }
 }
 
-
 // MARK: - PreviewProvider
 
 struct Preview: PreviewProvider {
     static var previews: some View {
-        // Preview를 보고자 하는 ViewController를 넣으면 됩니다.
+        // {뷰 컨트롤러 이름}().toPreview()
         ViewController().toPreview()
     }
 }

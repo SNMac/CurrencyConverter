@@ -34,6 +34,13 @@ final class CurrencyCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    // MARK: - Methods
+    
+    func configure(currencyCode: String, exchangeRate: Double) {
+        currencyCodeLabel.text = currencyCode
+        exchangeRateLabel.text = String(format: "%.4f", exchangeRate)
+    }
 }
 
 // MARK: - UI Methods

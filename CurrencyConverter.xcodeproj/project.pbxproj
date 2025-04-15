@@ -9,17 +9,16 @@
 /* Begin PBXBuildFile section */
 		5B7E1B622DAE320A0011B8FA /* Then in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B612DAE320A0011B8FA /* Then */; };
 		5B7E1B652DAE321A0011B8FA /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B642DAE321A0011B8FA /* SnapKit */; };
-		5B7E1B682DAE32B50011B8FA /* RxBlocking in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B672DAE32B50011B8FA /* RxBlocking */; };
-		5B7E1B6A2DAE32B50011B8FA /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B692DAE32B50011B8FA /* RxCocoa */; };
-		5B7E1B6C2DAE32B50011B8FA /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B6B2DAE32B50011B8FA /* RxRelay */; };
-		5B7E1B6E2DAE32B50011B8FA /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B6D2DAE32B50011B8FA /* RxSwift */; };
-		5B7E1B702DAE32B50011B8FA /* RxTest in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7E1B6F2DAE32B50011B8FA /* RxTest */; };
 		5BD5F5C02DAE33E00025A168 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 5BD5F5BF2DAE33E00025A168 /* .gitignore */; };
+		5BD5F5C82DAE3AB90025A168 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD5F5C72DAE3AB90025A168 /* RxCocoa */; };
+		5BD5F5CA2DAE3AB90025A168 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD5F5C92DAE3AB90025A168 /* RxRelay */; };
+		5BD5F5CC2DAE3AB90025A168 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD5F5CB2DAE3AB90025A168 /* RxSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5B7E1ACF2DAE2F230011B8FA /* CurrencyConverter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CurrencyConverter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BD5F5BF2DAE33E00025A168 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		5BD5F5C32DAE39EA0025A168 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -48,12 +47,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B7E1B702DAE32B50011B8FA /* RxTest in Frameworks */,
-				5B7E1B6E2DAE32B50011B8FA /* RxSwift in Frameworks */,
-				5B7E1B6C2DAE32B50011B8FA /* RxRelay in Frameworks */,
+				5BD5F5CC2DAE3AB90025A168 /* RxSwift in Frameworks */,
+				5BD5F5CA2DAE3AB90025A168 /* RxRelay in Frameworks */,
 				5B7E1B622DAE320A0011B8FA /* Then in Frameworks */,
-				5B7E1B682DAE32B50011B8FA /* RxBlocking in Frameworks */,
-				5B7E1B6A2DAE32B50011B8FA /* RxCocoa in Frameworks */,
+				5BD5F5C82DAE3AB90025A168 /* RxCocoa in Frameworks */,
 				5B7E1B652DAE321A0011B8FA /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -66,6 +63,7 @@
 			children = (
 				5BD5F5BF2DAE33E00025A168 /* .gitignore */,
 				5B7E1AD12DAE2F230011B8FA /* CurrencyConverter */,
+				5BD5F5C22DAE39EA0025A168 /* Frameworks */,
 				5B7E1AD02DAE2F230011B8FA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -76,6 +74,14 @@
 				5B7E1ACF2DAE2F230011B8FA /* CurrencyConverter.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5BD5F5C22DAE39EA0025A168 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5BD5F5C32DAE39EA0025A168 /* XCTest.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -100,11 +106,9 @@
 			packageProductDependencies = (
 				5B7E1B612DAE320A0011B8FA /* Then */,
 				5B7E1B642DAE321A0011B8FA /* SnapKit */,
-				5B7E1B672DAE32B50011B8FA /* RxBlocking */,
-				5B7E1B692DAE32B50011B8FA /* RxCocoa */,
-				5B7E1B6B2DAE32B50011B8FA /* RxRelay */,
-				5B7E1B6D2DAE32B50011B8FA /* RxSwift */,
-				5B7E1B6F2DAE32B50011B8FA /* RxTest */,
+				5BD5F5C72DAE3AB90025A168 /* RxCocoa */,
+				5BD5F5C92DAE3AB90025A168 /* RxRelay */,
+				5BD5F5CB2DAE3AB90025A168 /* RxSwift */,
 			);
 			productName = CurrencyConverter;
 			productReference = 5B7E1ACF2DAE2F230011B8FA /* CurrencyConverter.app */;
@@ -180,7 +184,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NCJMGH8Z64;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CurrencyConverter/Info.plist;
+				INFOPLIST_FILE = CurrencyConverter/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -212,7 +216,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NCJMGH8Z64;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CurrencyConverter/Info.plist;
+				INFOPLIST_FILE = CurrencyConverter/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -417,30 +421,20 @@
 			package = 5B7E1B632DAE321A0011B8FA /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
 		};
-		5B7E1B672DAE32B50011B8FA /* RxBlocking */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B7E1B662DAE32B50011B8FA /* XCRemoteSwiftPackageReference "RxSwift" */;
-			productName = RxBlocking;
-		};
-		5B7E1B692DAE32B50011B8FA /* RxCocoa */ = {
+		5BD5F5C72DAE3AB90025A168 /* RxCocoa */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5B7E1B662DAE32B50011B8FA /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxCocoa;
 		};
-		5B7E1B6B2DAE32B50011B8FA /* RxRelay */ = {
+		5BD5F5C92DAE3AB90025A168 /* RxRelay */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5B7E1B662DAE32B50011B8FA /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxRelay;
 		};
-		5B7E1B6D2DAE32B50011B8FA /* RxSwift */ = {
+		5BD5F5CB2DAE3AB90025A168 /* RxSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5B7E1B662DAE32B50011B8FA /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxSwift;
-		};
-		5B7E1B6F2DAE32B50011B8FA /* RxTest */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B7E1B662DAE32B50011B8FA /* XCRemoteSwiftPackageReference "RxSwift" */;
-			productName = RxTest;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

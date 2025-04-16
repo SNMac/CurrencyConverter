@@ -14,6 +14,8 @@ final class CurrencyTableView: UITableView {
     override init(frame: CGRect = .zero, style: UITableView.Style = .plain) {
         super.init(frame: frame, style: style)
         self.backgroundColor = .systemBackground
+        self.separatorInset.left = 16
+        self.separatorInset.right = 16
         self.register(CurrencyCell.self, forCellReuseIdentifier: CurrencyCell.identifier)
         // height = 60
         self.rowHeight = 60

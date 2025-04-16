@@ -17,16 +17,39 @@ final class CurrencyViewModel {
     
     // MARK: - Data ➡️ Output
     
+    /// 모든 환율 데이터 [통화코드: (국가명, 환율)]
+    var allRates = [String: (country: String, rate: Double)]()
+    /// 현재 보여지고 있는 환율 데이터
+    var showingRates = BehaviorRelay<[String: (country: String, rate: Double)]>(value: [:])
+    /// 총 셀 개수
     var cellCount = BehaviorRelay<Int>(value: 0)
+    /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
     var isErrorOccured = BehaviorRelay<Bool>(value: false)
-    
-    /// [통화코드: 환율]
-    var rates = BehaviorRelay<[String: (country: String, rate: Double)]>(value: [:])
     
     init() {
         loadCurrency()
     }
 }
+
+// MARK: - Methods
+
+extension CurrencyViewModel {
+    func searchCurrency(of text: String) {
+        /*
+         UX 고민
+         - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
+         - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
+         */
+        let filteredRates = allRates.filter {
+            $0.key.hasPrefix(text.uppercased()) ||
+            $0.value.country.lowercased().contains(text.lowercased())
+        }
+        print(filteredRates)
+        showingRates.accept(filteredRates)
+    }
+}
+
+// MARK: - Private Methods
 
 private extension CurrencyViewModel {
     func loadCurrency() {
@@ -35,16 +58,17 @@ private extension CurrencyViewModel {
             
             switch result {
             case .success(let currency):
-                var preprocessData = [String: (country: String, rate: Double)]()
+                var preprocessData: [String: (country: String, rate: Double)] = [:]
                 for rate in currency.rates {
-                    guard let country = currencyMap[rate.key] else { continue }
+                    let country = currencyMap[rate.key] ?? ""
                     preprocessData[rate.key] = (country, rate.value)
                 }
-                rates.accept(preprocessData)
-                cellCount.accept(rates.value.count)
+                allRates = preprocessData
+                showingRates.accept(preprocessData)
+                cellCount.accept(showingRates.value.count)
                 
             case .failure(_):
-                rates.accept([:])
+                showingRates.accept([:])
                 cellCount.accept(0)
                 isErrorOccured.accept(true)
             }

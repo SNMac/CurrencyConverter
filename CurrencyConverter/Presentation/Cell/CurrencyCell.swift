@@ -14,11 +14,6 @@ final class CurrencyCell: UITableViewCell {
     
     // MARK: - UI Components
     
-    private let labelStackView = UIStackView().then {
-        $0.axis = .vertical
-        $0.spacing = 4
-    }
-    
     private let currencyLabel = UILabel().then {
         $0.text = "XCG"
         $0.font = .systemFont(ofSize: 16, weight: .medium)
@@ -28,6 +23,11 @@ final class CurrencyCell: UITableViewCell {
         $0.text = "가상통화 (Crypto Generic)"
         $0.font = .systemFont(ofSize: 14)
         $0.textColor = .gray
+    }
+    
+    private let labelStackView = UIStackView().then {
+        $0.axis = .vertical
+        $0.spacing = 4
     }
     
     private let rateLabel = UILabel().then {
@@ -46,9 +46,11 @@ final class CurrencyCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    // MARK: - Methods
-    
+}
+
+// MARK: - Methods
+
+extension CurrencyCell {
     func configure(currency: String, country: String, rate: Double) {
         currencyLabel.text = currency
         countryLabel.text = country

@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MainViewController.swift
 //  CurrencyConverter
 //
 //  Created by 서동환 on 4/15/25.
@@ -13,7 +13,7 @@ import Then
 
 import SwiftUI  // PreviewProvider 용도
 
-final class ViewController: UIViewController {
+final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
@@ -24,10 +24,12 @@ final class ViewController: UIViewController {
     
     // MARK: - UI Components
     
-    private let searchBar = UISearchBar().then {
+    private lazy var searchBar = UISearchBar().then {
+        $0.delegate = self
         $0.searchBarStyle = .minimal
         $0.placeholder = "통화 검색"
     }
+    
     private let currencyTableView = CurrencyTableView(frame: .zero)
     
     // MARK: - Lifecycle
@@ -44,7 +46,7 @@ final class ViewController: UIViewController {
 
 // MARK: - UI Methods
 
-private extension ViewController {
+private extension MainViewController {
     func setupUI() {
         setViewHierarchy()
         setConstraints()
@@ -81,13 +83,12 @@ private extension ViewController {
             })
             .disposed(by: disposeBag)
         
-        viewModel.rates
+        viewModel.showingRates
             .asDriver(onErrorJustReturn: [:])
             .map({ return $0.sorted { $0.key < $1.key } })
             .drive(currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { [weak self] _, element, cell in
-                    guard let self else { return }
+                cellType: CurrencyCell.self)) { _, element, cell in
                 cell.configure(
                     currency: element.key,
                     country: element.value.country,
@@ -108,7 +109,7 @@ private extension ViewController {
 
 // MARK: - Private Methods
 
-private extension ViewController {
+private extension MainViewController {
     func showFailedToLoadAlert() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -120,11 +121,20 @@ private extension ViewController {
     }
 }
 
+// MARK: - UISearchBarDelegate
+
+extension MainViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        print(searchText)
+        viewModel.searchCurrency(of: searchText)
+    }
+}
+
 // MARK: - PreviewProvider
 
 struct Preview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        ViewController().toPreview()
+        MainViewController().toPreview()
     }
 }

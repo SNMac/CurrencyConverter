@@ -24,15 +24,13 @@ final class ViewController: UIViewController {
     
     // MARK: - UI Components
     
-    private lazy var currencyTableView = CurrencyTableView(frame: .zero).then {
-        $0.delegate = self
-        $0.dataSource = self
-    }
+    private lazy var currencyTableView = CurrencyTableView(frame: .zero)
     
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationController?.navigationBar.isHidden = true
         self.view.backgroundColor = .systemBackground
         
         setupUI()
@@ -60,31 +58,23 @@ private extension ViewController {
     
     func bind() {
         viewModel.cellCount
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] cellCount in
+            .asDriver(onErrorJustReturn: 0)
+            .drive(onNext: { [weak self] cellCount in
                 self?.cellCount = cellCount
             })
             .disposed(by: disposeBag)
-    }
-}
-
-// MARK: - UITableViewDelegate
-
-extension ViewController: UITableViewDelegate {
-    
-}
-
-// MARK: - UITableViewDataSource
-
-extension ViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return cellCount
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: CurrencyCell.identifier, for: indexPath)
         
-        return cell
+        viewModel.rates
+            .asDriver(onErrorJustReturn: [:])
+            .map({
+                return $0.sorted { $0.key < $1.key }
+            })
+            .drive(currencyTableView.rx.items(
+                cellIdentifier: CurrencyCell.identifier,
+                cellType: CurrencyCell.self)) { _, element, cell in
+                cell.configure(currencyCode: element.key, exchangeRate: element.value)
+            }
+            .disposed(by: disposeBag)
     }
 }
 
@@ -92,7 +82,7 @@ extension ViewController: UITableViewDataSource {
 
 struct Preview: PreviewProvider {
     static var previews: some View {
-        // {뷰 컨트롤러 이름}().toPreview()
+        // {뷰 컨트롤러 인스턴스}.toPreview()
         ViewController().toPreview()
     }
 }

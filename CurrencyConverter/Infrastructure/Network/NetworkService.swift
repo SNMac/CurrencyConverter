@@ -12,6 +12,7 @@ final class NetworkService {
     private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "NetworkService")
     
     func fetchData(completion: @escaping (Data?) -> Void) {
+//        guard let url: URL = URL(string: "https://open.er-api.com/v6/latest/USD1") else {  // Alert 테스트
         guard let url: URL = URL(string: "https://open.er-api.com/v6/latest/USD") else {
             os_log("유효하지 않은 URL", log: self.log, type: .error)
             completion(nil)

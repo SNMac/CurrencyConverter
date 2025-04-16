@@ -17,7 +17,7 @@ final class CurrencyViewModel {
     // MARK: - Data ➡️ Output
     
     var cellCount = BehaviorRelay<Int>(value: 0)
-    var loadCurrencyError = PublishRelay<Bool>()
+    var isErrorOccured = BehaviorRelay<Bool>(value: false)
     
     /// [통화코드: 환율]
     var rates = BehaviorRelay<[String: Double]>(value: [:])
@@ -40,7 +40,7 @@ private extension CurrencyViewModel {
             case .failure(_):
                 rates.accept([:])
                 cellCount.accept(0)
-                loadCurrencyError.accept(true)
+                isErrorOccured.accept(true)
             }
         }
     }

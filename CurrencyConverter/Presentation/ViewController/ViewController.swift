@@ -66,15 +66,35 @@ private extension ViewController {
         
         viewModel.rates
             .asDriver(onErrorJustReturn: [:])
-            .map({
-                return $0.sorted { $0.key < $1.key }
-            })
+            .map({ return $0.sorted { $0.key < $1.key } })
             .drive(currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, element, cell in
                 cell.configure(currencyCode: element.key, exchangeRate: element.value)
             }
             .disposed(by: disposeBag)
+        
+        viewModel.isErrorOccured
+            .bind { [weak self] isError in
+                if isError {
+                    self?.showFailedToLoadAlert()
+                }
+            }
+            .disposed(by: disposeBag)
+    }
+}
+
+// MARK: - Private Methods
+
+private extension ViewController {
+    func showFailedToLoadAlert() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            
+            let alert = UIAlertController(title: "오류", message: "데이터를 불러올 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            self.present(alert, animated: true)
+        }
     }
 }
 

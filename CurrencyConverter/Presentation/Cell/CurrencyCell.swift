@@ -7,8 +7,11 @@
 
 import UIKit
 import SnapKit
+import Then
 
 final class CurrencyCell: UITableViewCell {
+    
+    // MARK: - Properties
     
     static let identifier = "CurrencyCell"
     

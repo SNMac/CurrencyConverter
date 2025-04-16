@@ -44,7 +44,7 @@ extension CurrencyViewModel {
             $0.key.hasPrefix(text.uppercased()) ||
             $0.value.country.lowercased().contains(text.lowercased())
         }
-        print(filteredRates)
+        cellCount.accept(filteredRates.count)
         showingRates.accept(filteredRates)
     }
 }

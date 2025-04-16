@@ -19,10 +19,16 @@ final class MainViewController: UIViewController {
     
     private let viewModel = CurrencyViewModel()
     private var disposeBag = DisposeBag()
-    
     private var cellCount: Int = 0
     
     // MARK: - UI Components
+    
+    private let emptyStateLabel = UILabel().then {
+        $0.text = "검색 결과 없음"
+        $0.font = .systemFont(ofSize: 16)
+        $0.textColor = .gray
+        $0.textAlignment = .center
+    }
     
     private lazy var searchBar = UISearchBar().then {
         $0.delegate = self
@@ -30,7 +36,7 @@ final class MainViewController: UIViewController {
         $0.placeholder = "통화 검색"
     }
     
-    private let currencyTableView = CurrencyTableView(frame: .zero)
+    private let currencyTableView = CurrencyTableView()
     
     // MARK: - Lifecycle
     
@@ -54,6 +60,7 @@ private extension MainViewController {
     
     func setViewHierarchy() {
         self.view.addSubviews(
+            emptyStateLabel,
             searchBar,
             currencyTableView
         )
@@ -65,6 +72,12 @@ private extension MainViewController {
         searchBar.snp.makeConstraints {
             $0.top.equalTo(self.view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
+        }
+        
+        emptyStateLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(self.view.safeAreaLayoutGuide).offset(searchBar.frame.height)
+            $0.width.equalTo(100)
         }
         
         // top = searchBar.bottom
@@ -89,13 +102,13 @@ private extension MainViewController {
             .drive(currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, element, cell in
-                cell.configure(
-                    currency: element.key,
-                    country: element.value.country,
-                    rate: element.value.rate
-                )
-            }
-            .disposed(by: disposeBag)
+                    cell.configure(
+                        currency: element.key,
+                        country: element.value.country,
+                        rate: element.value.rate
+                    )
+                }
+                .disposed(by: disposeBag)
         
         viewModel.isErrorOccured
             .bind { [weak self] isError in
@@ -125,8 +138,14 @@ private extension MainViewController {
 
 extension MainViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print(searchText)
         viewModel.searchCurrency(of: searchText)
+        
+        if !searchText.isEmpty, cellCount == 0 {
+            // 검색 결과 없음 표시
+            currencyTableView.backgroundColor = .clear
+        } else {
+            currencyTableView.backgroundColor = .systemBackground
+        }
     }
 }
 

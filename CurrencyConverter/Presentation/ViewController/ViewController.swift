@@ -24,7 +24,11 @@ final class ViewController: UIViewController {
     
     // MARK: - UI Components
     
-    private lazy var currencyTableView = CurrencyTableView(frame: .zero)
+    private let searchBar = UISearchBar().then {
+        $0.searchBarStyle = .minimal
+        $0.placeholder = "통화 검색"
+    }
+    private let currencyTableView = CurrencyTableView(frame: .zero)
     
     // MARK: - Lifecycle
     
@@ -47,12 +51,25 @@ private extension ViewController {
     }
     
     func setViewHierarchy() {
-        self.view.addSubview(currencyTableView)
+        self.view.addSubviews(
+            searchBar,
+            currencyTableView
+        )
     }
     
     func setConstraints() {
+        // top = safeAreaLayoutGuide
+        // leading, trailing = superView
+        searchBar.snp.makeConstraints {
+            $0.top.equalTo(self.view.safeAreaLayoutGuide)
+            $0.leading.trailing.equalToSuperview()
+        }
+        
+        // top = searchBar.bottom
+        // leading, trailing, bottom = safeAreaLayoutGuide
         currencyTableView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.top.equalTo(searchBar.snp.bottom)
+            $0.leading.trailing.bottom.equalTo(self.view.safeAreaLayoutGuide)
         }
     }
     
@@ -69,8 +86,13 @@ private extension ViewController {
             .map({ return $0.sorted { $0.key < $1.key } })
             .drive(currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, element, cell in
-                cell.configure(currencyCode: element.key, exchangeRate: element.value)
+                cellType: CurrencyCell.self)) { [weak self] _, element, cell in
+                    guard let self else { return }
+                cell.configure(
+                    currency: element.key,
+                    country: element.value.country,
+                    rate: element.value.rate
+                )
             }
             .disposed(by: disposeBag)
         

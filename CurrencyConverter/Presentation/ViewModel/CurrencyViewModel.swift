@@ -13,6 +13,7 @@ final class CurrencyViewModel {
     // MARK: - Properties
     
     private let dataService = DataService()
+    private let currencyMap = currencyMapping
     
     // MARK: - Data ➡️ Output
     
@@ -20,7 +21,7 @@ final class CurrencyViewModel {
     var isErrorOccured = BehaviorRelay<Bool>(value: false)
     
     /// [통화코드: 환율]
-    var rates = BehaviorRelay<[String: Double]>(value: [:])
+    var rates = BehaviorRelay<[String: (country: String, rate: Double)]>(value: [:])
     
     init() {
         loadCurrency()
@@ -34,7 +35,12 @@ private extension CurrencyViewModel {
             
             switch result {
             case .success(let currency):
-                rates.accept(currency.rates)
+                var preprocessData = [String: (country: String, rate: Double)]()
+                for rate in currency.rates {
+                    guard let country = currencyMap[rate.key] else { continue }
+                    preprocessData[rate.key] = (country, rate.value)
+                }
+                rates.accept(preprocessData)
                 cellCount.accept(rates.value.count)
                 
             case .failure(_):

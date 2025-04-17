@@ -26,7 +26,8 @@ final class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.isHidden = true
+        self.navigationItem.title = "환율 정보"
+        self.navigationController?.navigationBar.prefersLargeTitles = true
         self.view.backgroundColor = .systemBackground
         
         setupUI()
@@ -107,7 +108,7 @@ private extension MainViewController {
 #if DEBUG
 import SwiftUI
 
-struct Preview: PreviewProvider {
+struct MainViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
         MainViewController().toPreview()

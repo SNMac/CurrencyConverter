@@ -25,3 +25,16 @@ extension UIViewController {
     }
 }
 #endif
+
+/* 사용법
+ #if DEBUG
+ import SwiftUI
+
+ struct ConverterViewControllerPreview: PreviewProvider {
+     static var previews: some View {
+         // {뷰 컨트롤러 인스턴스}.toPreview()
+         ConverterViewController().toPreview()
+     }
+ }
+ #endif
+ */

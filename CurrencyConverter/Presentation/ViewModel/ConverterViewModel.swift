@@ -30,9 +30,9 @@ final class ConverterViewModel {
     // MARK: - Data ➡️ Output
     
     struct Output {
-        let convertedCurrency: PublishRelay<Double>
+        /// 변환된 환율
+        let convertedCurrency: Signal<Double>
     }
-    private let convertedCurrency = PublishRelay<Double>()
 }
 
 // MARK: - Methods
@@ -40,17 +40,13 @@ final class ConverterViewModel {
 extension ConverterViewModel {
     func transform(input: Input) -> Output {
         // 버튼이 눌렸을 때 amountText와 rate의 최신값을 가져옴
-        input.buttonTapped
+        let convertedCurrency = input.buttonTapped
             .withLatestFrom(Observable.combineLatest(input.amountText, input.rate))
-            .asDriver(onErrorJustReturn: ("", 0.0))
             .map { amountText, rate in
                 let amount = Double(amountText) ?? 0.0
                 return amount * rate
             }
-            .drive(with: self, onNext: { owner, amount in
-                owner.convertedCurrency.accept(amount)
-            })
-            .disposed(by: disposeBag)
+            .asSignal(onErrorJustReturn: 0.0)
         
         return Output(convertedCurrency: convertedCurrency)
     }

@@ -31,17 +31,19 @@ final class MainViewModel {
         /// 검색중인 통화 코드 or 국가명
         let searchText: ControlProperty<String>
     }
-
+    
     // MARK: - Data ➡️ Output
     
     struct Output {
         /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
-        let isErrorOccurred: BehaviorRelay<Bool>
+        let needToShowAlert: Driver<Bool>
         /// 현재 보여지고 있는 환율 데이터
-        let showingCurrencies: BehaviorRelay<[CurrencyModel]>
+        let showingCurrencies: Driver<[CurrencyModel]>
+        /// "검색 결과 없음" 표시 용도
+        let isHiddenEmptyLabel: Driver<Bool>
     }
     
-    private let isErrorOccurred = BehaviorRelay<Bool>(value: false)
+    private let needToShowAlert = BehaviorRelay<Bool>(value: false)
     private let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
     
     // MARK: - Initializer
@@ -55,6 +57,7 @@ final class MainViewModel {
 
 extension MainViewModel {
     func transform(input: Input) -> Output {
+        // 검색 필터링
         input.searchText
             .asDriver(onErrorJustReturn: "")
             .drive(with: self, onNext: { owner, searchText in
@@ -63,7 +66,7 @@ extension MainViewModel {
                  - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
                  - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
                  */
-                let filteredRates = self.allCurrencies.filter {
+                let filteredRates = owner.allCurrencies.filter {
                     $0.currency.hasPrefix(searchText.uppercased()) ||
                     $0.country.lowercased().contains(searchText.lowercased())
                 }
@@ -71,7 +74,15 @@ extension MainViewModel {
                 os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingCurrencies.value.count)
             }).disposed(by: disposeBag)
         
-        return Output(isErrorOccurred: isErrorOccurred, showingCurrencies: showingCurrencies)
+        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+        let isHiddenEmptyLabel = Driver.combineLatest(input.searchText.asDriver(), showingCurrencies.asDriver())
+            .map { searchText, showingRates in
+                searchText.isEmpty == true || showingRates.isEmpty == false
+            }
+        
+        return Output(needToShowAlert: needToShowAlert.asDriver(),
+                      showingCurrencies: showingCurrencies.asDriver(),
+                      isHiddenEmptyLabel: isHiddenEmptyLabel)
     }
 }
 
@@ -89,12 +100,12 @@ private extension MainViewModel {
                     return CurrencyModel(currency: $0.key, country: country, rate: $0.value)
                 }.sorted(by: { $0.currency < $1.currency })
                 showingCurrencies.accept(allCurrencies)
-                isErrorOccurred.accept(false)
+                needToShowAlert.accept(false)
                 
             case .failure(_):
                 allCurrencies = []
                 showingCurrencies.accept([])
-                isErrorOccurred.accept(true)
+                needToShowAlert.accept(true)
             }
         }
     }

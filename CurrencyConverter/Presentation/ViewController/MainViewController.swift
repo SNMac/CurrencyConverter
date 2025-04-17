@@ -68,26 +68,44 @@ private extension MainViewController {
             .disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        let searchText = mainView.currencySearchBar.rx.text.orEmpty
-        Observable.combineLatest(searchText, output.showingRates)
-            .asDriver(onErrorJustReturn: ("", output.showingRates.value))
-            .map { searchText, showingRates in
-                searchText.isEmpty == true || showingRates.isEmpty == false
-            }
-            .drive(with: self) { owner, needToHide in
-                owner.mainView.emptyStateLabel.isHidden = needToHide
-            }
-            .disposed(by: disposeBag)
+        Observable.combineLatest(
+            mainView.currencySearchBar.rx.text.orEmpty,
+            output.showingRates
+        )
+        .asDriver(onErrorJustReturn: ("", output.showingRates.value))
+        .map { searchText, showingRates in
+            searchText.isEmpty == true || showingRates.isEmpty == false
+        }
+        .drive(with: self) { owner, needToHide in
+            owner.mainView.emptyStateLabel.isHidden = needToHide
+        }
+        .disposed(by: disposeBag)
         
         // CurrencyTableView에 데이터 표시
         output.showingRates
             .asDriver(onErrorJustReturn: [])
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, element, cell in
-                    cell.configure(currencyModel: element)
+                cellType: CurrencyCell.self)) { _, model, cell in
+                    cell.configure(currencyModel: model)
                 }
                 .disposed(by: disposeBag)
+        
+        // CurrencyTableView 셀 선택 시 ConverterViewController 표시
+        Observable.zip(
+            mainView.currencyTableView.rx.modelSelected(CurrencyModel.self),
+            mainView.currencyTableView.rx.itemSelected
+        )
+        .asDriver(onErrorJustReturn: (CurrencyModel(), IndexPath()))
+        .drive(with: self, onNext: { owner, element in
+            let (model, indexPath) = element
+            
+            owner.mainView.currencyTableView.deselectRow(at: indexPath, animated: true)
+            let converterModel = ConverterModel(currency: model.currency, country: model.country)
+            let converterVC = ConverterViewController(converterModel: converterModel)
+            owner.navigationController?.pushViewController(converterVC, animated: true)
+        })
+        .disposed(by: disposeBag)
     }
 }
 

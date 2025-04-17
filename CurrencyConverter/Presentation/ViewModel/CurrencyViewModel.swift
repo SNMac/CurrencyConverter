@@ -57,15 +57,15 @@ extension CurrencyViewModel {
     func transform(input: Input) -> Output {
         input.searchText
             .asDriver(onErrorJustReturn: "")
-            .drive(with: self, onNext: { owner, text in
+            .drive(with: self, onNext: { owner, searchText in
                 /*
                  UX 고민
                  - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
                  - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
                  */
                 let filteredRates = self.allRates.filter {
-                    $0.currency.hasPrefix(text.uppercased()) ||
-                    $0.country.lowercased().contains(text.lowercased())
+                    $0.currency.hasPrefix(searchText.uppercased()) ||
+                    $0.country.lowercased().contains(searchText.lowercased())
                 }
                 owner.showingRates.accept(filteredRates)
                 os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingRates.value.count)

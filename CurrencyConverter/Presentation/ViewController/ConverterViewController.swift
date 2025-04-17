@@ -13,10 +13,6 @@ import Then
 
 final class ConverterViewController: UIViewController {
     
-    // MARK: - Properties
-    
-    
-    
     // MARK: - UI Components
     
     private let converterView = ConverterView()
@@ -25,11 +21,22 @@ final class ConverterViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.title = "환율 정보"
+        self.navigationItem.title = "환율 계산기"
         self.navigationController?.navigationBar.prefersLargeTitles = true
         self.view.backgroundColor = .systemBackground
         
         setupUI()
+    }
+    
+    // MARK: - Initializer
+    
+    init(converterModel: ConverterModel) {
+        super.init(nibName: nil, bundle: nil)
+        converterView.configure(converterModel: converterModel)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
 
@@ -58,7 +65,8 @@ import SwiftUI
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        ConverterViewController().toPreview()
+        let model = ConverterModel(currency: "XCG", country: "가상통화 (Crypto Generic)")
+        ConverterViewController(converterModel: model).toPreview()
     }
 }
 #endif

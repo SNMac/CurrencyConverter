@@ -30,14 +30,14 @@ final class ConverterView: UIView {
         $0.alignment = .center
     }
     
-    private let amountTextField = UITextField().then {
+    let amountTextField = UITextField().then {
         $0.borderStyle = .roundedRect
         $0.keyboardType = .decimalPad
         $0.textAlignment = .center
-        $0.placeholder = "금액을 입력하세요"
+        $0.placeholder = "달러(USD)를 입력하세요"
     }
     
-    private let convertButton = UIButton().then {
+    let convertButton = UIButton().then {
         $0.backgroundColor = .systemBlue
         $0.setTitle("환율 계산", for: .normal)
         $0.setTitleColor(.white, for: .normal)
@@ -45,7 +45,7 @@ final class ConverterView: UIView {
         $0.layer.cornerRadius = 8
     }
     
-    private let resultLabel = UILabel().then {
+    let resultLabel = UILabel().then {
         $0.text = "계산 결과가 여기에 표시됩니다"
         $0.font = .systemFont(ofSize: 20, weight: .medium)
         $0.textAlignment = .center
@@ -65,9 +65,9 @@ final class ConverterView: UIView {
 // MARK: - Methods
 
 extension ConverterView {
-    func configure(converterModel: ConverterModel) {
-        currencyLabel.text = converterModel.currency
-        countryLabel.text = converterModel.country
+    func configure(currencyModel: CurrencyModel) {
+        currencyLabel.text = currencyModel.currency
+        countryLabel.text = currencyModel.country
     }
 }
 

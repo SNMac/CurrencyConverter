@@ -1,5 +1,5 @@
 //
-//  CurrencyViewModel.swift
+//  MainViewModel.swift
 //  CurrencyConverter
 //
 //  Created by 서동환 on 4/15/25.
@@ -11,7 +11,7 @@ import RxSwift
 import RxRelay
 import RxCocoa
 
-final class CurrencyViewModel {
+final class MainViewModel {
     
     // MARK: - Properties
     
@@ -23,7 +23,7 @@ final class CurrencyViewModel {
     private let disposeBag = DisposeBag()
     
     /// 모든 환율 데이터
-    private var allRates = [CurrencyModel]()
+    private var allCurrencies = [CurrencyModel]()
     
     // MARK: - User Action ➡️ Input
     
@@ -38,22 +38,22 @@ final class CurrencyViewModel {
         /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
         let isErrorOccurred: BehaviorRelay<Bool>
         /// 현재 보여지고 있는 환율 데이터
-        let showingRates: BehaviorRelay<[CurrencyModel]>
+        let showingCurrencies: BehaviorRelay<[CurrencyModel]>
     }
     
     private let isErrorOccurred = BehaviorRelay<Bool>(value: false)
-    private let showingRates = BehaviorRelay<[CurrencyModel]>(value: [])
+    private let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
     
     // MARK: - Initializer
     
     init() {
-        loadCurrency()
+        loadData()
     }
 }
 
 // MARK: - Methods
 
-extension CurrencyViewModel {
+extension MainViewModel {
     func transform(input: Input) -> Output {
         input.searchText
             .asDriver(onErrorJustReturn: "")
@@ -63,38 +63,37 @@ extension CurrencyViewModel {
                  - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
                  - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
                  */
-                let filteredRates = self.allRates.filter {
+                let filteredRates = self.allCurrencies.filter {
                     $0.currency.hasPrefix(searchText.uppercased()) ||
                     $0.country.lowercased().contains(searchText.lowercased())
                 }
-                owner.showingRates.accept(filteredRates)
-                os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingRates.value.count)
-            })
-            .disposed(by: disposeBag)
+                owner.showingCurrencies.accept(filteredRates)
+                os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingCurrencies.value.count)
+            }).disposed(by: disposeBag)
         
-        return Output(isErrorOccurred: isErrorOccurred, showingRates: showingRates)
+        return Output(isErrorOccurred: isErrorOccurred, showingCurrencies: showingCurrencies)
     }
 }
 
 // MARK: - Private Methods
 
-private extension CurrencyViewModel {
-    func loadCurrency() {
+private extension MainViewModel {
+    func loadData() {
         dataService.loadCurrency { [weak self] result in
             guard let self else { return }
             
             switch result {
             case .success(let currency):
-                allRates = currency.rates.map {
+                allCurrencies = currency.rates.map {
                     let country = self.currencyMap[$0.key] ?? ""
                     return CurrencyModel(currency: $0.key, country: country, rate: $0.value)
                 }.sorted(by: { $0.currency < $1.currency })
-                showingRates.accept(allRates)
+                showingCurrencies.accept(allCurrencies)
                 isErrorOccurred.accept(false)
                 
             case .failure(_):
-                allRates = []
-                showingRates.accept([])
+                allCurrencies = []
+                showingCurrencies.accept([])
                 isErrorOccurred.accept(true)
             }
         }

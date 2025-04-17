@@ -13,6 +13,13 @@ import Then
 
 final class ConverterViewController: UIViewController {
     
+    // MARK: - Properties
+    
+    private let viewModel = ConverterViewModel()
+    private let disposeBag = DisposeBag()
+    
+    private let currencyModel: CurrencyModel
+    
     // MARK: - UI Components
     
     private let converterView = ConverterView()
@@ -26,13 +33,16 @@ final class ConverterViewController: UIViewController {
         self.view.backgroundColor = .systemBackground
         
         setupUI()
+        bind()
     }
     
     // MARK: - Initializer
     
-    init(converterModel: ConverterModel) {
+    init(currencyModel: CurrencyModel) {
+        self.currencyModel = currencyModel
         super.init(nibName: nil, bundle: nil)
-        converterView.configure(converterModel: converterModel)
+        
+        converterView.configure(currencyModel: currencyModel)
     }
     
     required init?(coder: NSCoder) {
@@ -55,6 +65,21 @@ private extension ConverterViewController {
             $0.edges.equalToSuperview()
         }
     }
+    
+    func bind() {
+        let input = ConverterViewModel.Input(
+            buttonTapped: converterView.convertButton.rx.tap,
+            amountText: converterView.amountTextField.rx.text.orEmpty,
+            rate: Observable.just(currencyModel.rate)
+        )
+        let output = viewModel.transform(input: input)
+        
+        output.convertedCurrency
+            .asDriver(onErrorJustReturn: 0.0)
+            .drive(with: self) { owner, converted in
+                owner.converterView.resultLabel.text = String(format: "%.4f", converted)
+            }.disposed(by: disposeBag)
+    }
 }
 
 // MARK: - PreviewProvider
@@ -65,8 +90,8 @@ import SwiftUI
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let model = ConverterModel(currency: "XCG", country: "가상통화 (Crypto Generic)")
-        ConverterViewController(converterModel: model).toPreview()
+        let model = CurrencyModel(currency: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
+        ConverterViewController(currencyModel: model).toPreview()
     }
 }
 #endif

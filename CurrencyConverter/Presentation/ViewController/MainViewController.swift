@@ -15,7 +15,7 @@ final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = CurrencyViewModel()
+    private let viewModel = MainViewModel()
     private let disposeBag = DisposeBag()
     
     // MARK: - UI Components
@@ -54,7 +54,7 @@ private extension MainViewController {
     }
     
     func bind() {
-        let input = CurrencyViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty)
+        let input = MainViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty)
         let output = viewModel.transform(input: input)
         
         // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
@@ -64,32 +64,29 @@ private extension MainViewController {
                 if isError {
                     owner.showFailedToLoadAlert()
                 }
-            })
-            .disposed(by: disposeBag)
+            }).disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
         Observable.combineLatest(
             mainView.currencySearchBar.rx.text.orEmpty,
-            output.showingRates
+            output.showingCurrencies
         )
-        .asDriver(onErrorJustReturn: ("", output.showingRates.value))
+        .asDriver(onErrorJustReturn: ("", output.showingCurrencies.value))
         .map { searchText, showingRates in
             searchText.isEmpty == true || showingRates.isEmpty == false
         }
         .drive(with: self) { owner, needToHide in
             owner.mainView.emptyStateLabel.isHidden = needToHide
-        }
-        .disposed(by: disposeBag)
+        }.disposed(by: disposeBag)
         
         // CurrencyTableView에 데이터 표시
-        output.showingRates
+        output.showingCurrencies
             .asDriver(onErrorJustReturn: [])
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, model, cell in
                     cell.configure(currencyModel: model)
-                }
-                .disposed(by: disposeBag)
+                }.disposed(by: disposeBag)
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
         Observable.zip(
@@ -101,11 +98,10 @@ private extension MainViewController {
             let (model, indexPath) = element
             
             owner.mainView.currencyTableView.deselectRow(at: indexPath, animated: true)
-            let converterModel = ConverterModel(currency: model.currency, country: model.country)
-            let converterVC = ConverterViewController(converterModel: converterModel)
+            let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
+            let converterVC = ConverterViewController(currencyModel: currencyModel)
             owner.navigationController?.pushViewController(converterVC, animated: true)
-        })
-        .disposed(by: disposeBag)
+        }).disposed(by: disposeBag)
     }
 }
 

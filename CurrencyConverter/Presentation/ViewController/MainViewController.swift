@@ -11,32 +11,16 @@ import RxCocoa
 import SnapKit
 import Then
 
-import SwiftUI  // PreviewProvider 용도
-
 final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
     private let viewModel = CurrencyViewModel()
-    private var disposeBag = DisposeBag()
-    private var cellCount: Int = 0
+    private let disposeBag = DisposeBag()
     
     // MARK: - UI Components
     
-    private let emptyStateLabel = UILabel().then {
-        $0.text = "검색 결과 없음"
-        $0.font = .systemFont(ofSize: 16)
-        $0.textColor = .gray
-        $0.textAlignment = .center
-    }
-    
-    private lazy var searchBar = UISearchBar().then {
-        $0.delegate = self
-        $0.searchBarStyle = .minimal
-        $0.placeholder = "통화 검색"
-    }
-    
-    private let currencyTableView = CurrencyTableView()
+    private let mainView = MainView()
     
     // MARK: - Lifecycle
     
@@ -59,64 +43,50 @@ private extension MainViewController {
     }
     
     func setViewHierarchy() {
-        self.view.addSubviews(
-            emptyStateLabel,
-            searchBar,
-            currencyTableView
-        )
+        self.view.addSubview(mainView)
     }
     
     func setConstraints() {
-        // top = safeAreaLayoutGuide
-        // leading, trailing = superView
-        searchBar.snp.makeConstraints {
-            $0.top.equalTo(self.view.safeAreaLayoutGuide)
-            $0.leading.trailing.equalToSuperview()
-        }
-        
-        emptyStateLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalTo(self.view.safeAreaLayoutGuide).offset(searchBar.frame.height)
-            $0.width.equalTo(100)
-        }
-        
-        // top = searchBar.bottom
-        // leading, trailing, bottom = safeAreaLayoutGuide
-        currencyTableView.snp.makeConstraints {
-            $0.top.equalTo(searchBar.snp.bottom)
-            $0.leading.trailing.bottom.equalTo(self.view.safeAreaLayoutGuide)
+        mainView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
     }
     
     func bind() {
-        viewModel.cellCount
-            .asDriver(onErrorJustReturn: 0)
-            .drive(onNext: { [weak self] cellCount in
-                self?.cellCount = cellCount
+        let input = CurrencyViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty)
+        let output = viewModel.transform(input: input)
+        
+        // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
+        output.isErrorOccurred
+            .asDriver(onErrorJustReturn: false)
+            .drive(with: self, onNext: { owner, isError in
+                if isError {
+                    owner.showFailedToLoadAlert()
+                }
             })
             .disposed(by: disposeBag)
         
-        viewModel.showingRates
-            .asDriver(onErrorJustReturn: [:])
-            .map({ return $0.sorted { $0.key < $1.key } })
-            .drive(currencyTableView.rx.items(
-                cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, element, cell in
-                    cell.configure(
-                        currency: element.key,
-                        country: element.value.country,
-                        rate: element.value.rate
-                    )
-                }
-                .disposed(by: disposeBag)
-        
-        viewModel.isErrorOccured
-            .bind { [weak self] isError in
-                if isError {
-                    self?.showFailedToLoadAlert()
-                }
+        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+        let searchText = mainView.currencySearchBar.rx.text.orEmpty
+        Observable.combineLatest(searchText, output.showingRates)
+            .asDriver(onErrorJustReturn: ("", output.showingRates.value))
+            .map { searchText, showingRates in
+                searchText.isEmpty == true || showingRates.isEmpty == false
+            }
+            .drive(with: self) { owner, needToHide in
+                owner.mainView.emptyStateLabel.isHidden = needToHide
             }
             .disposed(by: disposeBag)
+        
+        // CurrencyTableView에 데이터 표시
+        output.showingRates
+            .asDriver(onErrorJustReturn: [])
+            .drive(mainView.currencyTableView.rx.items(
+                cellIdentifier: CurrencyCell.identifier,
+                cellType: CurrencyCell.self)) { _, element, cell in
+                    cell.configure(currencyModel: element)
+                }
+                .disposed(by: disposeBag)
     }
 }
 
@@ -124,9 +94,7 @@ private extension MainViewController {
 
 private extension MainViewController {
     func showFailedToLoadAlert() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            
+        DispatchQueue.main.async {
             let alert = UIAlertController(title: "오류", message: "데이터를 불러올 수 없습니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
             self.present(alert, animated: true)
@@ -134,22 +102,10 @@ private extension MainViewController {
     }
 }
 
-// MARK: - UISearchBarDelegate
-
-extension MainViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        viewModel.searchCurrency(of: searchText)
-        
-        if !searchText.isEmpty, cellCount == 0 {
-            // 검색 결과 없음 표시
-            currencyTableView.backgroundColor = .clear
-        } else {
-            currencyTableView.backgroundColor = .systemBackground
-        }
-    }
-}
-
 // MARK: - PreviewProvider
+
+#if DEBUG
+import SwiftUI
 
 struct Preview: PreviewProvider {
     static var previews: some View {
@@ -157,3 +113,4 @@ struct Preview: PreviewProvider {
         MainViewController().toPreview()
     }
 }
+#endif

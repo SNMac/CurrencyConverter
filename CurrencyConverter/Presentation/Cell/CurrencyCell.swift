@@ -54,10 +54,10 @@ final class CurrencyCell: UITableViewCell {
 // MARK: - Methods
 
 extension CurrencyCell {
-    func configure(currency: String, country: String, rate: Double) {
-        currencyLabel.text = currency
-        countryLabel.text = country
-        rateLabel.text = String(format: "%.4f", rate)
+    func configure(currencyModel: CurrencyModel) {
+        currencyLabel.text = currencyModel.currency
+        countryLabel.text = currencyModel.country
+        rateLabel.text = String(format: "%.4f", currencyModel.rate)
     }
 }
 

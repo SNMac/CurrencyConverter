@@ -9,31 +9,40 @@ import Foundation
 import OSLog
 
 final class DataService {
+    
+    // MARK: - Properties
+    
     private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "DataService")
     
     private let networkService = NetworkService()
     
-    enum DataError: Error {
-        case fileNotFound
-        case parsingFailed
+    enum DataError: String, Error {
+        case fileNotFound = "JSON 파일 없음"
+        case parsingFailed = "JSON 파싱 에러"
     }
     
+    // MARK: - Methods
+    
     func loadCurrency(completion: @escaping (Result<Currency, Error>) -> Void) {
-        networkService.fetchData { data in
-            guard let data else {
-                os_log("JSON 파일을 찾을 수 없음", log: self.log, type: .error)
+        networkService.fetchData { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let data):
+                do {
+                    let currency = try JSONDecoder().decode(Currency.self, from: data)
+                    os_log("currency: %@", log: self.log, type: .debug, "\(currency)")
+                    completion(.success(currency))
+                } catch {
+                    let message = DataError.parsingFailed.rawValue + ": \(error)"
+                    os_log("%@: %@", log: self.log, type: .error, message)
+                    completion(.failure(DataError.parsingFailed))
+                }
+                
+            case .failure(_):
+                let message = DataError.fileNotFound.rawValue
+                os_log("%@", log: self.log, type: .error, message)
                 completion(.failure(DataError.fileNotFound))
-                return
-            }
-            
-            do {
-                let currency = try JSONDecoder().decode(Currency.self, from: data)
-                os_log("currency: %@", log: self.log, type: .debug, "\(currency)")
-                completion(.success(currency))
-            } catch {
-                let errorString = "\(error)"
-                os_log("JSON 파싱 에러 : $@", log: self.log, type: .error, errorString)
-                completion(.failure(DataError.parsingFailed))
+                
             }
         }
     }

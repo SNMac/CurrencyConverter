@@ -17,7 +17,6 @@ final class CurrencyTableView: UITableView {
         self.separatorInset.left = 16
         self.separatorInset.right = 16
         self.register(CurrencyCell.self, forCellReuseIdentifier: CurrencyCell.identifier)
-        // height = 60
         self.rowHeight = 60
     }
     

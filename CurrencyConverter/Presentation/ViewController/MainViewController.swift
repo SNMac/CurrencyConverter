@@ -15,7 +15,7 @@ final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = CurrencyViewModel()
+    private let viewModel = MainViewModel()
     private let disposeBag = DisposeBag()
     
     // MARK: - UI Components
@@ -26,7 +26,8 @@ final class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.isHidden = true
+        self.navigationItem.title = "환율 정보"
+        self.navigationController?.navigationBar.prefersLargeTitles = true
         self.view.backgroundColor = .systemBackground
         
         setupUI()
@@ -53,40 +54,46 @@ private extension MainViewController {
     }
     
     func bind() {
-        let input = CurrencyViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty)
-        let output = viewModel.transform(input: input)
-        
+        // ViewModel ➡️ State
         // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
-        output.isErrorOccurred
-            .asDriver(onErrorJustReturn: false)
-            .drive(with: self, onNext: { owner, isError in
-                if isError {
-                    owner.showFailedToLoadAlert()
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        let searchText = mainView.currencySearchBar.rx.text.orEmpty
-        Observable.combineLatest(searchText, output.showingRates)
-            .asDriver(onErrorJustReturn: ("", output.showingRates.value))
-            .map { searchText, showingRates in
-                searchText.isEmpty == true || showingRates.isEmpty == false
+        viewModel.state.needToShowAlert = { [weak self] isError in
+            if isError {
+                self?.showFailedToLoadAlert()
             }
-            .drive(with: self) { owner, needToHide in
-                owner.mainView.emptyStateLabel.isHidden = needToHide
-            }
-            .disposed(by: disposeBag)
+        }
         
         // CurrencyTableView에 데이터 표시
-        output.showingRates
-            .asDriver(onErrorJustReturn: [])
+        let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
+        showingCurrencies
+            .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, element, cell in
-                    cell.configure(currencyModel: element)
-                }
-                .disposed(by: disposeBag)
+                cellType: CurrencyCell.self)) { _, model, cell in
+                    cell.configure(currencyModel: model)
+                }.disposed(by: disposeBag)
+        viewModel.state.filteredCurrencies = { currencies in
+            showingCurrencies.accept(currencies)
+        }
+        
+        // CurrencyTableView 셀 선택 시 ConverterViewController 표시
+        mainView.currencyTableView.rx.modelSelected(CurrencyModel.self)
+            .asDriver()
+            .drive(with: self) { owner, model in
+                let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
+                let converterVC = ConverterViewController(currencyModel: currencyModel)
+                owner.navigationController?.pushViewController(converterVC, animated: true)
+            }.disposed(by: disposeBag)
+        
+        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+        viewModel.state.isHiddenEmptyLabel = { [weak self] isHidden in
+            self?.mainView.emptyStateLabel.isHidden = isHidden
+        }
+        
+        // Action ➡️ ViewModel
+        let action = MainViewModel.Action(
+            didBinding: Observable.just(()),
+            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
+        viewModel.action?(action)
     }
 }
 
@@ -95,9 +102,7 @@ private extension MainViewController {
 private extension MainViewController {
     func showFailedToLoadAlert() {
         DispatchQueue.main.async {
-            let alert = UIAlertController(title: "오류", message: "데이터를 불러올 수 없습니다.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "확인", style: .default))
-            self.present(alert, animated: true)
+            AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
         }
     }
 }
@@ -107,7 +112,7 @@ private extension MainViewController {
 #if DEBUG
 import SwiftUI
 
-struct Preview: PreviewProvider {
+struct MainViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
         MainViewController().toPreview()

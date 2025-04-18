@@ -42,7 +42,6 @@ final class DataService {
                 let message = DataError.fileNotFound.rawValue
                 os_log("%@", log: self.log, type: .error, message)
                 completion(.failure(DataError.fileNotFound))
-                
             }
         }
     }

@@ -38,10 +38,13 @@ final class ConverterView: UIView {
     }
     
     let convertButton = UIButton().then {
-        $0.backgroundColor = .systemBlue
-        $0.setTitle("환율 계산", for: .normal)
-        $0.setTitleColor(.white, for: .normal)
-        $0.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        var config = UIButton.Configuration.filled()
+        config.baseBackgroundColor = .systemBlue
+        var titleContainer = AttributeContainer()
+        titleContainer.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        titleContainer.foregroundColor = .white
+        config.attributedTitle = AttributedString("환율 계산", attributes: titleContainer)
+        $0.configuration = config
         $0.layer.cornerRadius = 8
     }
     

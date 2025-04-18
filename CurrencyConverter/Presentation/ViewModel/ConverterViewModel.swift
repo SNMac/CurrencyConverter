@@ -22,17 +22,22 @@ final class ConverterViewModel {
     // MARK: - User Action ➡️ Input
     
     struct Input {
+        /// 버튼 눌렸을 때 발생하는 이벤트
         let buttonTapped: ControlEvent<Void>
+        /// 통화 코드
         let currency: Observable<String>
+        /// 사용자의 입력값(USD)
         let amountText: ControlProperty<String>
+        /// 통화 코드에 따른 환율
         let rate: Observable<Double>
     }
     
     // MARK: - Data ➡️ Output
     
     struct Output {
-        /// 변환된 환율
+        /// Alert에 표시할 메시지
         let alertMessage: Signal<String>
+        /// 변환된 환율
         let convertedResult: Signal<String>
     }
 }
@@ -41,7 +46,7 @@ final class ConverterViewModel {
 
 extension ConverterViewModel {
     func transform(input: Input) -> Output {
-        // 잘못된 입력값 Alert 처리
+        // 버튼이 눌렸을 때) 잘못된 입력값 Alert 처리
         let alertMessage = input.buttonTapped
             .withLatestFrom(input.amountText)
             .map { amountText in
@@ -54,7 +59,7 @@ extension ConverterViewModel {
                 }
             }.asSignal(onErrorJustReturn: "")
         
-        // 버튼이 눌렸을 때 amountText와 rate의 최신값을 가져옴
+        // 버튼이 눌렸을 때) 입력값에 따른 환율 계산
         let convertedResult = input.buttonTapped
             .withLatestFrom(Observable.combineLatest(input.currency, input.amountText, input.rate))
             .filter({ _, amountText, _ in

@@ -43,6 +43,7 @@ final class MainViewModel {
         let isHiddenEmptyLabel: Signal<Bool>
     }
     
+    // TODO: Input, Output 구조체만 남기기
     private let needToShowAlert = BehaviorRelay<Bool>(value: false)
     private let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
     
@@ -57,7 +58,7 @@ final class MainViewModel {
 
 extension MainViewModel {
     func transform(input: Input) -> Output {
-        // 검색 필터링
+        // 검색에 따라 데이터 필터링
         input.searchText
             .subscribe(with: self) { owner, searchText in
                 /*

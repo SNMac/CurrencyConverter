@@ -75,6 +75,7 @@ private extension ConverterViewController {
         )
         let output = viewModel.transform(input: input)
         
+        // 잘못된 입력값 Alert 처리
         output.alertMessage
             .emit(with: self) { owner, message in
                 if !message.isEmpty {
@@ -82,6 +83,7 @@ private extension ConverterViewController {
                 }
             }.disposed(by: disposeBag)
         
+        // 입력값에 따라 계산된 환율 표시
         output.convertedResult
             .emit(to: converterView.resultLabel.rx.text)
             .disposed(by: disposeBag)

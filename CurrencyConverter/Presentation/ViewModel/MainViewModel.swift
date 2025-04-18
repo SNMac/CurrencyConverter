@@ -10,7 +10,7 @@ import OSLog
 import RxSwift
 import RxRelay
 
-final class MainViewModel {
+final class MainViewModel: ViewModelProtocol {
     
     // MARK: - Properties
     
@@ -23,75 +23,73 @@ final class MainViewModel {
     
     /// 모든 환율 데이터
     private var allCurrencies = [CurrencyModel]()
+    /// 필터링된(=보여지는) 환율 데이터
+    private var filteredCurrencies = [CurrencyModel]()
     
-    // MARK: - User Action ➡️ Input
+    // MARK: - Action ➡️ Input
     
-    struct Input {
+    struct Action {
+        /// 바인딩 이후 알림
+        let didBinding: Observable<Void>
         /// 검색중인 통화 코드 or 국가명
         let searchText: Observable<String>
     }
+    var action: ((Action) -> Void)?
     
-    // MARK: - Output ➡️ Data
+    // MARK: - Output ➡️ State
     
-    struct Output {
+    struct State {
         /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
-        let needToShowAlert: BehaviorRelay<Bool>
-        /// 현재 보여지고 있는 환율 데이터
-        let showingCurrencies: BehaviorRelay<[CurrencyModel]>
+        var needToShowAlert: ((Bool) -> Void)?
+        /// 필터링된(=보여지는) 환율 데이터
+        var filteredCurrencies: (([CurrencyModel]) -> Void)?
         /// "검색 결과 없음" 표시 용도
-        let isHiddenEmptyLabel: PublishRelay<Bool>
+        var isHiddenEmptyLabel: ((Bool) -> Void)?
     }
-    
-    // TODO: Input, Output 구조체만 남기기
-    private let needToShowAlert = BehaviorRelay<Bool>(value: false)
-    private let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
+    var state: State
     
     // MARK: - Initializer
     
     init() {
-        loadData()
-    }
-}
-
-// MARK: - Methods
-
-extension MainViewModel {
-    func transform(input: Input) -> Output {
-        let isHiddenEmptyLabel = PublishRelay<Bool>()
+        state = State()
         
-        // 검색에 따라 데이터 필터링
-        input.searchText
-            .subscribe(with: self) { owner, searchText in
-                /*
-                 UX 고민
-                 - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
-                 - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
-                 */
-                let filteredCurrencies = owner.allCurrencies.filter {
-                    $0.currency.hasPrefix(searchText.uppercased()) ||
-                    $0.country.lowercased().contains(searchText.lowercased())
-                }
-                owner.showingCurrencies.accept(filteredCurrencies)
-                os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingCurrencies.value.count)
-            }.disposed(by: disposeBag)
-        
-        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        Observable.combineLatest(input.searchText, showingCurrencies)
-            .map { searchText, showingRates in
-                searchText.isEmpty == true || showingRates.isEmpty == false
-            }
-            .bind(to: isHiddenEmptyLabel)
-            .disposed(by: disposeBag)
-        
-        return Output(needToShowAlert: needToShowAlert,
-                      showingCurrencies: showingCurrencies,
-                      isHiddenEmptyLabel: isHiddenEmptyLabel)
+        action = { [weak self] action in
+            guard let self else { return }
+            
+            // 검색에 따라 데이터 필터링
+            action.searchText
+                .subscribe(with: self) { owner, searchText in
+                    /*
+                     UX 고민
+                     - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
+                     - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
+                     */
+                    owner.filteredCurrencies = owner.allCurrencies.filter {
+                        $0.currency.hasPrefix(searchText.uppercased()) ||
+                        $0.country.lowercased().contains(searchText.lowercased())
+                    }
+                    os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, owner.filteredCurrencies.count)
+                    owner.state.filteredCurrencies?(owner.filteredCurrencies)
+                    
+                    // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+                    if searchText.isEmpty == true || owner.filteredCurrencies.isEmpty == false {
+                        owner.state.isHiddenEmptyLabel?(true)
+                    } else {
+                        owner.state.isHiddenEmptyLabel?(false)
+                    }
+                }.disposed(by: disposeBag)
+            
+            action.didBinding
+                .subscribe(with: self) { owner, _ in
+                    owner.loadData()
+                }.disposed(by: disposeBag)
+        }
     }
 }
 
 // MARK: - Private Methods
 
-private extension MainViewModel {
+extension MainViewModel {
     func loadData() {
         dataService.loadCurrency { [weak self] result in
             guard let self else { return }
@@ -102,13 +100,15 @@ private extension MainViewModel {
                     let country = self.currencyMap[$0.key] ?? ""
                     return CurrencyModel(currency: $0.key, country: country, rate: $0.value)
                 }.sorted(by: { $0.currency < $1.currency })
-                showingCurrencies.accept(allCurrencies)
-                needToShowAlert.accept(false)
+                filteredCurrencies = allCurrencies
+                state.filteredCurrencies?(allCurrencies)
+                state.needToShowAlert?(false)
                 
             case .failure(_):
                 allCurrencies = []
-                showingCurrencies.accept([])
-                needToShowAlert.accept(true)
+                filteredCurrencies = []
+                state.filteredCurrencies?([])
+                state.needToShowAlert?(true)
             }
         }
     }

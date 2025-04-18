@@ -54,46 +54,46 @@ private extension MainViewController {
     }
     
     func bind() {
-        let input = MainViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
-        let output = viewModel.transform(input: input)
-        
+        // ViewModel ➡️ State
         // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
-        output.needToShowAlert
-            .asDriver()
-            .drive(with: self) { owner, isError in
-                if isError {
-                    owner.showFailedToLoadAlert()
-                }
-            }.disposed(by: disposeBag)
+        viewModel.state.needToShowAlert = { [weak self] isError in
+            if isError {
+                self?.showFailedToLoadAlert()
+            }
+        }
         
         // CurrencyTableView에 데이터 표시
-        output.showingCurrencies
+        let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
+        showingCurrencies
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, model, cell in
                     cell.configure(currencyModel: model)
                 }.disposed(by: disposeBag)
-        
-        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        output.isHiddenEmptyLabel
-            .asSignal()
-            .emit(to: mainView.emptyStateLabel.rx.isHidden)
-            .disposed(by: disposeBag)
+        viewModel.state.filteredCurrencies = { currencies in
+            showingCurrencies.accept(currencies)
+        }
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
-        Driver.zip(
-            mainView.currencyTableView.rx.modelSelected(CurrencyModel.self).asDriver(),
-            mainView.currencyTableView.rx.itemSelected.asDriver()
-        )
-        .drive(with: self) { owner, element in
-            let (model, indexPath) = element
-            owner.mainView.currencyTableView.deselectRow(at: indexPath, animated: true)
-            
-            let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
-            let converterVC = ConverterViewController(currencyModel: currencyModel)
-            owner.navigationController?.pushViewController(converterVC, animated: true)
-        }.disposed(by: disposeBag)
+        mainView.currencyTableView.rx.modelSelected(CurrencyModel.self)
+            .asDriver()
+            .drive(with: self) { owner, model in
+                let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
+                let converterVC = ConverterViewController(currencyModel: currencyModel)
+                owner.navigationController?.pushViewController(converterVC, animated: true)
+            }.disposed(by: disposeBag)
+        
+        // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+        viewModel.state.isHiddenEmptyLabel = { [weak self] isHidden in
+            self?.mainView.emptyStateLabel.isHidden = isHidden
+        }
+        
+        // Action ➡️ ViewModel
+        let action = MainViewModel.Action(
+            didBinding: Observable.just(()),
+            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
+        viewModel.action?(action)
     }
 }
 

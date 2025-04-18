@@ -69,15 +69,6 @@ private extension ConverterViewController {
     }
     
     func bind() {
-        // Action ➡️ ViewModel
-        let action = ConverterViewModel.Action(
-            buttonTapped: converterView.convertButton.rx.tap.asObservable(),
-            currency: Observable.just(currencyModel.currency),
-            amountText: converterView.amountTextField.rx.text.orEmpty.asObservable(),
-            rate: Observable.just(currencyModel.rate)
-        )
-        viewModel.action?(action)
-        
         // ViewModel ➡️ State
         // 잘못된 입력값 Alert 처리
         viewModel.state.alertMessage = { [weak self] message in
@@ -91,6 +82,15 @@ private extension ConverterViewController {
         viewModel.state.convertedResult = { [weak self] result in
             self?.converterView.resultLabel.text = result
         }
+        
+        // Action ➡️ ViewModel
+        let action = ConverterViewModel.Action(
+            buttonTapped: converterView.convertButton.rx.tap.asObservable(),
+            currency: Observable.just(currencyModel.currency),
+            amountText: converterView.amountTextField.rx.text.orEmpty.asObservable(),
+            rate: Observable.just(currencyModel.rate)
+        )
+        viewModel.action?(action)
     }
 }
 

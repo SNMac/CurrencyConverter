@@ -6,15 +6,12 @@
 //
 
 import Foundation
-import OSLog
 import RxSwift
 import RxRelay
 
 final class ConverterViewModel: ViewModelProtocol {
     
     // MARK: - Properties
-    
-    private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CurrencyViewModel")
     
     private let disposeBag = DisposeBag()
     
@@ -82,42 +79,3 @@ final class ConverterViewModel: ViewModelProtocol {
         }
     }
 }
-
-// MARK: - Methods
-
-//extension ConverterViewModel {
-//    func transform(action: Action) {
-//        let alertMessage = PublishRelay<String>()
-//        let convertedResult = PublishRelay<String>()
-//        
-//        // 버튼이 눌렸을 때) 잘못된 입력값 Alert 처리
-//        action.buttonTapped
-//            .withLatestFrom(action.amountText)
-//            .map { amountText in
-//                if amountText.isEmpty {
-//                    return "금액을 입력해주세요"
-//                } else if Double(amountText) == nil {
-//                    return "올바른 숫자를 입력해주세요"
-//                } else {
-//                    return ""
-//                }
-//            }.bind(to: state.alertMessage)
-//            .disposed(by: disposeBag)
-//        
-//        // 버튼이 눌렸을 때) 입력값에 따른 환율 계산
-//        action.buttonTapped
-//            .withLatestFrom(Observable.combineLatest(action.currency, action.amountText, action.rate))
-//            .filter({ _, amountText, _ in
-//                !amountText.isEmpty && Double(amountText) != nil
-//            })
-//            .map { currency, amountText, rate in
-//                let amount = Double(amountText) ?? 0.0
-//                let converted = round(amount * rate * 100) / 100
-//                
-//                let showingAmount = String(format: "%.2f", amount)
-//                let showingConverted = String(format: "%.2f", converted)
-//                return "$\(showingAmount) → \(showingConverted) \(currency)"
-//            }.bind(to: state.convertedResult)
-//            .disposed(by: disposeBag)
-//    }
-//}

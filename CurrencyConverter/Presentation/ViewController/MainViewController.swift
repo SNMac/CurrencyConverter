@@ -75,9 +75,8 @@ private extension MainViewController {
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
         output.isHiddenEmptyLabel
-            .emit(with: self) { owner, isHidden in
-                owner.mainView.emptyStateLabel.isHidden = isHidden
-            }.disposed(by: disposeBag)
+            .emit(to: mainView.emptyStateLabel.rx.isHidden)
+            .disposed(by: disposeBag)
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
         Driver.zip(

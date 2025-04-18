@@ -69,16 +69,22 @@ private extension ConverterViewController {
     func bind() {
         let input = ConverterViewModel.Input(
             buttonTapped: converterView.convertButton.rx.tap,
+            currency: Observable.just(currencyModel.currency),
             amountText: converterView.amountTextField.rx.text.orEmpty,
             rate: Observable.just(currencyModel.rate)
         )
         let output = viewModel.transform(input: input)
         
-        output.convertedCurrency
-            .asDriver(onErrorJustReturn: 0.0)
-            .drive(with: self) { owner, converted in
-                owner.converterView.resultLabel.text = String(format: "%.4f", converted)
+        output.alertMessage
+            .emit(with: self) { owner, message in
+                if !message.isEmpty {
+                    AlertHelper.showAlert(title: "오류", message: message, over: owner)
+                }
             }.disposed(by: disposeBag)
+        
+        output.convertedResult
+            .emit(to: converterView.resultLabel.rx.text)
+            .disposed(by: disposeBag)
     }
 }
 

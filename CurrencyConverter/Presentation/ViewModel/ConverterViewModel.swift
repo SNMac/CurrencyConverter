@@ -23,6 +23,7 @@ final class ConverterViewModel {
     
     struct Input {
         let buttonTapped: ControlEvent<Void>
+        let currency: Observable<String>
         let amountText: ControlProperty<String>
         let rate: Observable<Double>
     }
@@ -31,7 +32,8 @@ final class ConverterViewModel {
     
     struct Output {
         /// 변환된 환율
-        let convertedCurrency: Signal<Double>
+        let alertMessage: Signal<String>
+        let convertedResult: Signal<String>
     }
 }
 
@@ -39,15 +41,34 @@ final class ConverterViewModel {
 
 extension ConverterViewModel {
     func transform(input: Input) -> Output {
-        // 버튼이 눌렸을 때 amountText와 rate의 최신값을 가져옴
-        let convertedCurrency = input.buttonTapped
-            .withLatestFrom(Observable.combineLatest(input.amountText, input.rate))
-            .map { amountText, rate in
-                let amount = Double(amountText) ?? 0.0
-                return amount * rate
-            }
-            .asSignal(onErrorJustReturn: 0.0)
+        // 잘못된 입력값 Alert 처리
+        let alertMessage = input.buttonTapped
+            .withLatestFrom(input.amountText)
+            .map { amountText in
+                if amountText.isEmpty {
+                    return "금액을 입력해주세요"
+                } else if Double(amountText) == nil {
+                    return "올바른 숫자를 입력해주세요"
+                } else {
+                    return ""
+                }
+            }.asSignal(onErrorJustReturn: "")
         
-        return Output(convertedCurrency: convertedCurrency)
+        // 버튼이 눌렸을 때 amountText와 rate의 최신값을 가져옴
+        let convertedResult = input.buttonTapped
+            .withLatestFrom(Observable.combineLatest(input.currency, input.amountText, input.rate))
+            .filter({ _, amountText, _ in
+                !amountText.isEmpty && Double(amountText) != nil
+            })
+            .map { currency, amountText, rate in
+                let amount = Double(amountText) ?? 0.0
+                let converted = round(amount * rate * 100) / 100
+                
+                let showingAmount = String(format: "%.2f", amount)
+                let showingConverted = String(format: "%.2f", converted)
+                return "$\(showingAmount) → \(showingConverted) \(currency)"
+            }.asSignal(onErrorJustReturn: "")
+        
+        return Output(alertMessage: alertMessage, convertedResult: convertedResult)
     }
 }

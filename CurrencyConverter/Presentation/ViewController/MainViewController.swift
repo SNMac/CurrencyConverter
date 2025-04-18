@@ -59,11 +59,11 @@ private extension MainViewController {
         
         // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
         output.needToShowAlert
-            .drive(with: self, onNext: { owner, isError in
+            .drive(with: self) { owner, isError in
                 if isError {
                     owner.showFailedToLoadAlert()
                 }
-            }).disposed(by: disposeBag)
+            }.disposed(by: disposeBag)
         
         // CurrencyTableView에 데이터 표시
         output.showingCurrencies
@@ -75,7 +75,7 @@ private extension MainViewController {
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
         output.isHiddenEmptyLabel
-            .drive(with: self) { owner, isHidden in
+            .emit(with: self) { owner, isHidden in
                 owner.mainView.emptyStateLabel.isHidden = isHidden
             }.disposed(by: disposeBag)
         
@@ -84,14 +84,14 @@ private extension MainViewController {
             mainView.currencyTableView.rx.modelSelected(CurrencyModel.self).asDriver(),
             mainView.currencyTableView.rx.itemSelected.asDriver()
         )
-        .drive(with: self, onNext: { owner, element in
+        .drive(with: self) { owner, element in
             let (model, indexPath) = element
             owner.mainView.currencyTableView.deselectRow(at: indexPath, animated: true)
             
             let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
             let converterVC = ConverterViewController(currencyModel: currencyModel)
             owner.navigationController?.pushViewController(converterVC, animated: true)
-        }).disposed(by: disposeBag)
+        }.disposed(by: disposeBag)
     }
 }
 
@@ -100,9 +100,7 @@ private extension MainViewController {
 private extension MainViewController {
     func showFailedToLoadAlert() {
         DispatchQueue.main.async {
-            let alert = UIAlertController(title: "오류", message: "데이터를 불러올 수 없습니다.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "확인", style: .default))
-            self.present(alert, animated: true)
+            AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
         }
     }
 }

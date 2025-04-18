@@ -9,13 +9,12 @@ import Foundation
 import OSLog
 import RxSwift
 import RxRelay
-import RxCocoa
 
 final class MainViewModel {
     
     // MARK: - Properties
     
-    private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CurrencyViewModel")
+    private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "MainViewModel")
     
     private let dataService = DataService()
     private let currencyMap = currencyMapping
@@ -29,18 +28,18 @@ final class MainViewModel {
     
     struct Input {
         /// 검색중인 통화 코드 or 국가명
-        let searchText: ControlProperty<String>
+        let searchText: Observable<String>
     }
     
-    // MARK: - Data ➡️ Output
+    // MARK: - Output ➡️ Data
     
     struct Output {
         /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
-        let needToShowAlert: Driver<Bool>  // TODO: Signal로 변환 시도
+        let needToShowAlert: BehaviorRelay<Bool>
         /// 현재 보여지고 있는 환율 데이터
-        let showingCurrencies: Driver<[CurrencyModel]>
+        let showingCurrencies: BehaviorRelay<[CurrencyModel]>
         /// "검색 결과 없음" 표시 용도
-        let isHiddenEmptyLabel: Signal<Bool>
+        let isHiddenEmptyLabel: PublishRelay<Bool>
     }
     
     // TODO: Input, Output 구조체만 남기기
@@ -58,6 +57,8 @@ final class MainViewModel {
 
 extension MainViewModel {
     func transform(input: Input) -> Output {
+        let isHiddenEmptyLabel = PublishRelay<Bool>()
+        
         // 검색에 따라 데이터 필터링
         input.searchText
             .subscribe(with: self) { owner, searchText in
@@ -66,22 +67,24 @@ extension MainViewModel {
                  - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
                  - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
                  */
-                let filteredRates = owner.allCurrencies.filter {
+                let filteredCurrencies = owner.allCurrencies.filter {
                     $0.currency.hasPrefix(searchText.uppercased()) ||
                     $0.country.lowercased().contains(searchText.lowercased())
                 }
-                owner.showingCurrencies.accept(filteredRates)
+                owner.showingCurrencies.accept(filteredCurrencies)
                 os_log("showingRates.count: %d", log: owner.log, type: .debug, owner.showingCurrencies.value.count)
             }.disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        let isHiddenEmptyLabel = Observable.combineLatest(input.searchText, showingCurrencies)
+        Observable.combineLatest(input.searchText, showingCurrencies)
             .map { searchText, showingRates in
                 searchText.isEmpty == true || showingRates.isEmpty == false
-            }.asSignal(onErrorJustReturn: true)
+            }
+            .bind(to: isHiddenEmptyLabel)
+            .disposed(by: disposeBag)
         
-        return Output(needToShowAlert: needToShowAlert.asDriver(),
-                      showingCurrencies: showingCurrencies.asDriver(),
+        return Output(needToShowAlert: needToShowAlert,
+                      showingCurrencies: showingCurrencies,
                       isHiddenEmptyLabel: isHiddenEmptyLabel)
     }
 }

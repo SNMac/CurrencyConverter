@@ -54,11 +54,12 @@ private extension MainViewController {
     }
     
     func bind() {
-        let input = MainViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty)
+        let input = MainViewModel.Input(searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
         let output = viewModel.transform(input: input)
         
         // 데이터가 없는 경우 "데이터를 불러올 수 없습니다" Alert 표시
         output.needToShowAlert
+            .asDriver()
             .drive(with: self) { owner, isError in
                 if isError {
                     owner.showFailedToLoadAlert()
@@ -67,6 +68,7 @@ private extension MainViewController {
         
         // CurrencyTableView에 데이터 표시
         output.showingCurrencies
+            .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, model, cell in
@@ -75,6 +77,7 @@ private extension MainViewController {
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
         output.isHiddenEmptyLabel
+            .asSignal()
             .emit(to: mainView.emptyStateLabel.rx.isHidden)
             .disposed(by: disposeBag)
         

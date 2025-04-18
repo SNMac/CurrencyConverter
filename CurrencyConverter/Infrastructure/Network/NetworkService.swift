@@ -8,7 +8,6 @@
 import Foundation
 import OSLog
 
-
 final class NetworkService {
     
     // MARK: - Properties

@@ -67,27 +67,50 @@ private extension ConverterViewController {
     }
     
     func bind() {
-        let input = ConverterViewModel.Input(
-            buttonTapped: converterView.convertButton.rx.tap,
-            currency: Observable.just(currencyModel.currency),
-            amountText: converterView.amountTextField.rx.text.orEmpty,
-            rate: Observable.just(currencyModel.rate)
-        )
-        let output = viewModel.transform(input: input)
+        viewModel.state.alertMessage = { [weak self] message in
+            guard let self else { return }
+            if message != "" {
+                AlertHelper.showAlert(title: "오류", message: message, over: self)
+            }
+        }
         
-        // 잘못된 입력값 Alert 처리
-        output.alertMessage
-            .emit(with: self) { owner, message in
-                if !message.isEmpty {
-                    AlertHelper.showAlert(title: "오류", message: message, over: owner)
-                }
+        viewModel.state.convertedResult = { [weak self] result in
+            self?.converterView.resultLabel.text = result
+        }
+        
+        converterView.convertButton.rx.tap
+            .bind(with: self) { owner, _ in
+                let action = ConverterViewModel.Action(
+                    currency: owner.currencyModel.currency,
+                    amountText: owner.converterView.amountTextField.text ?? "",
+                    rate: owner.currencyModel.rate
+                )
+                owner.viewModel.action?(action)
             }.disposed(by: disposeBag)
-        
-        // 입력값에 따라 계산된 환율 표시
-        output.convertedResult
-            .emit(to: converterView.resultLabel.rx.text)
-            .disposed(by: disposeBag)
     }
+    
+//    func bind() {
+//        let action = ConverterViewModel.Action(
+//            buttonTapped: converterView.convertButton.rx.tap,
+//            currency: Observable.just(currencyModel.currency),
+//            amountText: converterView.amountTextField.rx.text.orEmpty,
+//            rate: Observable.just(currencyModel.rate)
+//        )
+//        let state = viewModel.state
+//        
+//        // 잘못된 입력값 Alert 처리
+//        state.alertMessage?
+//            .emit(with: self) { owner, message in
+//                if !message.isEmpty {
+//                    AlertHelper.showAlert(title: "오류", message: message, over: owner)
+//                }
+//            }.disposed(by: disposeBag)
+//        
+//        // 입력값에 따라 계산된 환율 표시
+//        state.convertedResult?
+//            .emit(to: converterView.resultLabel.rx.text)
+//            .disposed(by: disposeBag)
+//    }
 }
 
 // MARK: - PreviewProvider

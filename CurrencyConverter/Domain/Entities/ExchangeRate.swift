@@ -7,7 +7,6 @@
 
 import Foundation
 
-// TODO: ExchangeRate로 이름 변경
 struct ExchangeRate: Codable {
     let result: String
     let baseCode: String

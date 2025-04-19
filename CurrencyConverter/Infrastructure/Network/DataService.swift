@@ -23,7 +23,7 @@ final class DataService {
     
     // MARK: - Methods
     
-    func loadCurrency(completion: @escaping (Result<Currency, Error>) -> Void) {
+    func loadData(completion: @escaping (Result<Currency, Error>) -> Void) {
         networkService.fetchData { [weak self] result in
             guard let self else { return }
             switch result {

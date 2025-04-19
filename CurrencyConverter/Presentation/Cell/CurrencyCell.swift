@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 import SnapKit
 import Then
 
@@ -14,6 +15,7 @@ final class CurrencyCell: UITableViewCell {
     // MARK: - Properties
     
     static let identifier = "CurrencyCell"
+    var disposeBag = DisposeBag()
     
     // MARK: - UI Components
     
@@ -37,6 +39,34 @@ final class CurrencyCell: UITableViewCell {
         $0.text = "1.7900"
         $0.font = .systemFont(ofSize: 16)
         $0.textAlignment = .right
+    }
+    
+    let favoriteButton = UIButton().then {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "star")?.withRenderingMode(.alwaysOriginal)
+        config.baseBackgroundColor = .clear
+        $0.configuration = config
+        $0.contentMode = .scaleAspectFit
+        
+        $0.configurationUpdateHandler = { button in
+            var config = button.configuration
+            
+            switch button.state {
+            case .selected:
+                config?.image = UIImage(systemName: "star.fill")?.withRenderingMode(.alwaysOriginal)
+            default:
+                config?.image = UIImage(systemName: "star")?.withRenderingMode(.alwaysOriginal)
+            }
+            
+            button.configuration = config
+        }
+    }
+    
+    // MARK: - Lifecycle
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
     }
     
     // MARK: - Initializer
@@ -71,7 +101,7 @@ private extension CurrencyCell {
     }
     
     func setViewHierarchy() {
-        self.addSubviews(labelStackView, rateLabel)
+        self.contentView.addSubviews(labelStackView, rateLabel, favoriteButton)
         
         labelStackView.addArrangedSubviews(
             currencyLabel,
@@ -92,10 +122,17 @@ private extension CurrencyCell {
         // leading ≥ labelStackView.trailing + 16
         // width = 120
         rateLabel.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(16)
+            $0.trailing.equalTo(favoriteButton.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
             $0.leading.greaterThanOrEqualTo(labelStackView.snp.trailing).offset(16)
             $0.width.equalTo(120)
+        }
+        
+        favoriteButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(16)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(rateLabel.snp.trailing).offset(16)
+            $0.width.height.equalTo(44)
         }
     }
 }

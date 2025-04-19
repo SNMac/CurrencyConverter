@@ -64,12 +64,22 @@ private extension MainViewController {
         
         // CurrencyTableView에 데이터 표시
         let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
+        let favoriteCurrency = PublishRelay<CurrencyModel>()
         showingCurrencies
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, model, cell in
                     cell.configure(currencyModel: model)
+                    
+                    // 즐겨찾기 버튼 바인딩
+                    cell.favoriteButton.rx.tap
+                        .asDriver()
+                        .drive(onNext: {
+                            cell.favoriteButton.isSelected.toggle()
+                            favoriteCurrency.accept(model)
+                        })
+                        .disposed(by: cell.disposeBag)
                 }.disposed(by: disposeBag)
         viewModel.state.filteredCurrencies = { currencies in
             showingCurrencies.accept(currencies)
@@ -92,7 +102,9 @@ private extension MainViewController {
         // Action ➡️ ViewModel
         let action = MainViewModel.Action(
             didBinding: Observable.just(()),
-            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
+            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable(),
+            favoriteCurrency: favoriteCurrency.asObservable()
+        )
         viewModel.action?(action)
     }
 }
@@ -105,6 +117,8 @@ private extension MainViewController {
             AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
         }
     }
+    
+    // TODO: 스크롤시 키보드 올라가게 해야함
 }
 
 // MARK: - PreviewProvider

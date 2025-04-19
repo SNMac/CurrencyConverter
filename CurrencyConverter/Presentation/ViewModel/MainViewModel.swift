@@ -33,6 +33,8 @@ final class MainViewModel: ViewModelProtocol {
         let didBinding: Observable<Void>
         /// 검색중인 통화 코드 or 국가명
         let searchText: Observable<String>
+        /// 즐겨찾기 상태를 변경한 환율 데이터
+        let favoriteCurrency: Observable<CurrencyModel>
     }
     var action: ((Action) -> Void)?
     
@@ -41,7 +43,7 @@ final class MainViewModel: ViewModelProtocol {
     struct State {
         /// 데이터를 불러오는 중 에러 발생시 true, 이외 false
         var needToShowAlert: ((Bool) -> Void)?
-        /// 필터링된(=보여지는) 환율 데이터
+        /// 필터링된(=보여지는) 환율 데이터 배열
         var filteredCurrencies: (([CurrencyModel]) -> Void)?
         /// "검색 결과 없음" 표시 용도
         var isHiddenEmptyLabel: ((Bool) -> Void)?
@@ -67,7 +69,7 @@ final class MainViewModel: ViewModelProtocol {
                     owner.filteredCurrencies = owner.allCurrencies.filter {
                         $0.currency.hasPrefix(searchText.uppercased()) ||
                         $0.country.lowercased().contains(searchText.lowercased())
-                    }
+                    }.sorted(by: { $0.isFavorite == true || $0.currency < $1.currency })
                     os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, owner.filteredCurrencies.count)
                     owner.state.filteredCurrencies?(owner.filteredCurrencies)
                     
@@ -79,9 +81,15 @@ final class MainViewModel: ViewModelProtocol {
                     }
                 }.disposed(by: disposeBag)
             
+            action.favoriteCurrency
+                .subscribe(with: self) { owner, model in
+                    
+                    os_log("favoriteCurrency: %@", log: owner.log, type: .debug, "\(model)")
+                }.disposed(by: disposeBag)
+            
             action.didBinding
                 .subscribe(with: self) { owner, _ in
-                    owner.loadData()
+                    owner.loadCurrencies()
                 }.disposed(by: disposeBag)
         }
     }
@@ -89,9 +97,9 @@ final class MainViewModel: ViewModelProtocol {
 
 // MARK: - Private Methods
 
-extension MainViewModel {
-    func loadData() {
-        dataService.loadCurrency { [weak self] result in
+private extension MainViewModel {
+    func loadCurrencies() {
+        dataService.loadData { [weak self] result in
             guard let self else { return }
             
             switch result {

@@ -11,10 +11,12 @@ struct CurrencyModel {
     let currency: String
     let country: String
     var rate: Double
+    var isFavorite: Bool
     
-    init(currency: String = "", country: String = "", rate: Double = 0.0) {
+    init(currency: String = "", country: String = "", rate: Double = 0.0, isFavorite: Bool = false) {
         self.currency = currency
         self.country = country
         self.rate = rate
+        self.isFavorite = isFavorite
     }
 }

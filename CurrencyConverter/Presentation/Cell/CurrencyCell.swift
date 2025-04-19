@@ -89,6 +89,7 @@ extension CurrencyCell {
         currencyLabel.text = currencyModel.currency
         countryLabel.text = currencyModel.country
         rateLabel.text = String(format: "%.4f", currencyModel.rate)
+        favoriteButton.isSelected = currencyModel.isFavorite
     }
 }
 
@@ -122,7 +123,6 @@ private extension CurrencyCell {
         // leading ≥ labelStackView.trailing + 16
         // width = 120
         rateLabel.snp.makeConstraints {
-            $0.trailing.equalTo(favoriteButton.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
             $0.leading.greaterThanOrEqualTo(labelStackView.snp.trailing).offset(16)
             $0.width.equalTo(120)
@@ -131,7 +131,7 @@ private extension CurrencyCell {
         favoriteButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.leading.equalTo(rateLabel.snp.trailing).offset(16)
+            $0.leading.equalTo(rateLabel.snp.trailing).offset(8)
             $0.width.height.equalTo(44)
         }
     }

@@ -76,7 +76,6 @@ private extension MainViewController {
                     cell.favoriteButton.rx.tap
                         .asDriver()
                         .drive(onNext: {
-                            cell.favoriteButton.isSelected.toggle()
                             favoriteCurrency.accept(model)
                         })
                         .disposed(by: cell.disposeBag)

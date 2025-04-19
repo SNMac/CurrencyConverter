@@ -23,15 +23,15 @@ final class DataService {
     
     // MARK: - Methods
     
-    func loadData(completion: @escaping (Result<Currency, Error>) -> Void) {
+    func loadData(completion: @escaping (Result<ExchangeRate, Error>) -> Void) {
         networkService.fetchData { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let data):
                 do {
-                    let currency = try JSONDecoder().decode(Currency.self, from: data)
-                    os_log("currency: %@", log: self.log, type: .debug, "\(currency)")
-                    completion(.success(currency))
+                    let exchangeRate = try JSONDecoder().decode(ExchangeRate.self, from: data)
+                    os_log("currency: %@", log: self.log, type: .debug, "\(exchangeRate)")
+                    completion(.success(exchangeRate))
                 } catch {
                     let message = DataError.parsingFailed.rawValue + ": \(error)"
                     os_log("%@: %@", log: self.log, type: .error, message)

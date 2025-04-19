@@ -22,9 +22,7 @@ final class MainViewModel: ViewModelProtocol {
     private let disposeBag = DisposeBag()
     
     /// 모든 환율 데이터
-    private var allCurrencies = [CurrencyModel]()
-    /// 필터링된(=보여지는) 환율 데이터
-    private var filteredCurrencies = [CurrencyModel]()
+    private var allCurrencies = [String: CurrencyModel]()
     
     // MARK: - Action ➡️ Input
     
@@ -58,35 +56,51 @@ final class MainViewModel: ViewModelProtocol {
         action = { [weak self] action in
             guard let self else { return }
             
-            // 검색에 따라 데이터 필터링
+            // 검색어 저장(merge 이벤트 생성용)
+            let searchTextRelay = BehaviorRelay<String>(value: "")
             action.searchText
-                .subscribe(with: self) { owner, searchText in
-                    /*
-                     UX 고민
-                     - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
-                     - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
-                     */
-                    owner.filteredCurrencies = owner.allCurrencies.filter {
-                        $0.currency.hasPrefix(searchText.uppercased()) ||
-                        $0.country.lowercased().contains(searchText.lowercased())
-                    }.sorted(by: { $0.isFavorite == true || $0.currency < $1.currency })
-                    os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, owner.filteredCurrencies.count)
-                    owner.state.filteredCurrencies?(owner.filteredCurrencies)
-                    
-                    // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-                    if searchText.isEmpty == true || owner.filteredCurrencies.isEmpty == false {
-                        owner.state.isHiddenEmptyLabel?(true)
-                    } else {
-                        owner.state.isHiddenEmptyLabel?(false)
-                    }
-                }.disposed(by: disposeBag)
+                .bind(to: searchTextRelay)
+                .disposed(by: disposeBag)
             
+            // 즐겨찾기 상태 데이터에 반영
             action.favoriteCurrency
                 .subscribe(with: self) { owner, model in
-                    
-                    os_log("favoriteCurrency: %@", log: owner.log, type: .debug, "\(model)")
+                    var updatedModel = model
+                    updatedModel.isFavorite.toggle()
+                    let logMsg = "(currency: \(updatedModel.currency), isFavorite: \(updatedModel.isFavorite))"
+                    os_log("updatedModel: %@", log: owner.log, type: .debug, logMsg)
+                    owner.allCurrencies[updatedModel.currency] = updatedModel
                 }.disposed(by: disposeBag)
             
+            // 검색어/즐겨찾기 상태 변경될 때마다 데이터 필터링/정렬
+            Observable.merge(
+                searchTextRelay.asObservable(),
+                action.favoriteCurrency.map { _ in searchTextRelay.value }
+            )
+            .subscribe(with: self) { owner, searchText in
+                /*
+                 UX 고민
+                 - 국가명을 검색할 때는 글자가 포함되기만 해도 결과에 포함되도록 구현
+                 - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
+                 */
+                let filteredCurrencies = owner.allCurrencies.values.filter {
+                    $0.currency.hasPrefix(searchText.uppercased()) ||
+                    $0.country.lowercased().contains(searchText.lowercased())
+                }.sorted {
+                    if $0.isFavorite == $1.isFavorite {
+                        return $0.currency < $1.currency
+                    }
+                    return $0.isFavorite == true
+                }
+                os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, filteredCurrencies.count)
+                owner.state.filteredCurrencies?(filteredCurrencies)
+                
+                // 검색 결과가 없을 경우 "검색 결과 없음" 표시
+                let isHidden = searchText.isEmpty == true || filteredCurrencies.isEmpty == false
+                owner.state.isHiddenEmptyLabel?(isHidden)
+            }.disposed(by: disposeBag)
+            
+            // 바인딩 완료 후 데이터 로딩
             action.didBinding
                 .subscribe(with: self) { owner, _ in
                     owner.loadCurrencies()
@@ -103,18 +117,18 @@ private extension MainViewModel {
             guard let self else { return }
             
             switch result {
-            case .success(let currency):
-                allCurrencies = currency.rates.map {
+            case .success(let exchangeRate):
+                let currencies = exchangeRate.rates.map {
                     let country = self.currencyMap[$0.key] ?? ""
                     return CurrencyModel(currency: $0.key, country: country, rate: $0.value)
-                }.sorted(by: { $0.currency < $1.currency })
-                filteredCurrencies = allCurrencies
-                state.filteredCurrencies?(allCurrencies)
+                }
+                allCurrencies = Dictionary(uniqueKeysWithValues: currencies.map { ($0.currency, $0) })
+                let filteredCurrencies = allCurrencies.values.sorted(by: { $0.currency < $1.currency })
+                state.filteredCurrencies?(filteredCurrencies)
                 state.needToShowAlert?(false)
                 
             case .failure(_):
-                allCurrencies = []
-                filteredCurrencies = []
+                allCurrencies = [:]
                 state.filteredCurrencies?([])
                 state.needToShowAlert?(true)
             }

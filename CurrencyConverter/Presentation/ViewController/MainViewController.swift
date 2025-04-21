@@ -63,9 +63,9 @@ private extension MainViewController {
         }
         
         // CurrencyTableView에 데이터 표시
-        let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
+        let sortedCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
         let favoriteCurrency = PublishRelay<CurrencyModel>()
-        showingCurrencies
+        sortedCurrencies
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
@@ -80,8 +80,8 @@ private extension MainViewController {
                         })
                         .disposed(by: cell.disposeBag)
                 }.disposed(by: disposeBag)
-        viewModel.state.filteredCurrencies = { currencies in
-            showingCurrencies.accept(currencies)
+        viewModel.state.sortedCurrencies = { currencies in
+            sortedCurrencies.accept(currencies)
         }
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
@@ -112,9 +112,7 @@ private extension MainViewController {
 
 private extension MainViewController {
     func showFailedToLoadAlert() {
-        DispatchQueue.main.async {
-            AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
-        }
+        AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
     }
     
     // TODO: 스크롤시 키보드 올라가게 해야함

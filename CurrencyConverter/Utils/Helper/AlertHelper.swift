@@ -9,8 +9,10 @@ import UIKit
 
 class AlertHelper {
     static func showAlert(title: String?, message: String?, over viewController: UIViewController) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        viewController.present(alert, animated: true)
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            viewController.present(alert, animated: true)
+        }
     }
 }

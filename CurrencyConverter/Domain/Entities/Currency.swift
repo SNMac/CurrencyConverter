@@ -7,24 +7,24 @@
 
 import Foundation
 
-struct Currency {
+struct Currency: Hashable {
     let code: String
     let country: String
-    var rate: Double
     var difference: Double
+    var rate: Double
     var isFavorite: Bool
     
     init(
         code: String = "",
         country: String = "",
-        rate: Double = 0.0,
         difference: Double = 0.0,
+        rate: Double = 0.0,
         isFavorite: Bool = false
     ) {
         self.code = code
         self.country = country
-        self.rate = rate
         self.difference = difference
+        self.rate = rate
         self.isFavorite = isFavorite
     }
 }

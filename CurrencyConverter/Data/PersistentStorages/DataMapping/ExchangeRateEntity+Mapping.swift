@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreData
 
 extension ExchangeRateEntity {
     func toDomain() -> ExchangeRate {
@@ -21,8 +22,8 @@ extension CurrencyEntity {
     func toDomain() -> Currency {
         return .init(code: code ?? "",
                      country: country ?? "",
-                     rate: rate,
                      difference: difference,
+                     rate: rate,
                      isFavorite: isFavorite)
     }
 }

@@ -28,6 +28,18 @@ final class DataService {
             guard let self else { return }
             switch result {
             case .success(let data):
+                /* ---------- 상승 하락 테스트 코드 ---------- */
+//                guard let path = Bundle.main.path(forResource: "mock", ofType: "json") else {
+//                    os_log("🚨 JSON 파일을 찾을 수 없음", log: self.log, type: .error)
+//                    completion(.failure(DataError.fileNotFound))
+//                    return
+//                }
+//                do {
+//                    let data = try Data(contentsOf: URL(fileURLWithPath: path))
+//                    let exchangeRateDTO = try JSONDecoder().decode(ExchangeRateDTO.self, from: data)
+//                    completion(.success(exchangeRateDTO.toDomain()))
+                /* ---------- 상승 하락 테스트 코드 ---------- */
+                
                 do {
                     let exchangeRateDTO = try JSONDecoder().decode(ExchangeRateDTO.self, from: data)
                     os_log("exchangeRate: %@", log: log, type: .debug, "\(exchangeRateDTO)")

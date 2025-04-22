@@ -41,6 +41,12 @@ final class CurrencyCell: UITableViewCell {
         $0.textAlignment = .right
     }
     
+    private let arrowLabel = UILabel().then {
+        $0.text = "🔼"
+        $0.textAlignment = .center
+        $0.isHidden = false
+    }
+    
     let favoriteButton = UIButton().then {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "star")?.withRenderingMode(.alwaysOriginal)
@@ -85,11 +91,18 @@ final class CurrencyCell: UITableViewCell {
 // MARK: - Methods
 
 extension CurrencyCell {
-    func configure(currencyModel: Currency) {
-        currencyLabel.text = currencyModel.code
-        countryLabel.text = currencyModel.country
-        rateLabel.text = String(format: "%.4f", currencyModel.rate)
-        favoriteButton.isSelected = currencyModel.isFavorite
+    func configure(currency: Currency) {
+        currencyLabel.text = currency.code
+        countryLabel.text = currency.country
+        rateLabel.text = String(format: "%.4f", currency.rate)
+        favoriteButton.isSelected = currency.isFavorite
+        if currency.difference > 0.01 {
+            arrowLabel.text = "🔼"
+        } else if currency.difference < -0.01 {
+            arrowLabel.text = "🔽"
+        } else {
+            arrowLabel.isHidden = true
+        }
     }
 }
 
@@ -102,7 +115,7 @@ private extension CurrencyCell {
     }
     
     func setViewHierarchy() {
-        self.contentView.addSubviews(labelStackView, rateLabel, favoriteButton)
+        self.contentView.addSubviews(labelStackView, rateLabel, arrowLabel, favoriteButton)
         
         labelStackView.addArrangedSubviews(
             currencyLabel,
@@ -128,10 +141,15 @@ private extension CurrencyCell {
             $0.width.equalTo(120)
         }
         
+        arrowLabel.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(rateLabel.snp.trailing).offset(8)
+        }
+        
         favoriteButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.leading.equalTo(rateLabel.snp.trailing).offset(8)
+            $0.leading.equalTo(arrowLabel.snp.trailing).offset(8)
             $0.width.height.equalTo(44)
         }
     }

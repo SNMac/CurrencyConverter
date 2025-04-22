@@ -70,7 +70,7 @@ private extension MainViewController {
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
                 cellType: CurrencyCell.self)) { _, model, cell in
-                    cell.configure(currencyModel: model)
+                    cell.configure(currency: model)
                     
                     // 즐겨찾기 버튼 바인딩
                     cell.favoriteButton.rx.tap

@@ -63,9 +63,7 @@ final class MainViewModel: ViewModelProtocol {
                 .subscribe(with: self, onNext: { owner, currency in
                     var updatedCurrency = currency
                     updatedCurrency.isFavorite.toggle()
-                    CoreDataStorage.shared.updateData(currency: currency)
-                    let logMsg = "(currency: \(updatedCurrency.code), isFavorite: \(updatedCurrency.isFavorite))"
-                    os_log("updatedCurrency: %@", log: owner.log, type: .debug, logMsg)
+                    CoreDataManager.shared.updateIsFavorite(currency: updatedCurrency)
                     
                     owner.allCurrencies[updatedCurrency.code] = updatedCurrency
                     owner.filteredCurrencies[updatedCurrency.code] = updatedCurrency
@@ -105,37 +103,35 @@ final class MainViewModel: ViewModelProtocol {
 
 private extension MainViewModel {
     func loadCurrencies() {
+        var localData = CoreDataManager.shared.fetchData()
+        
         dataService.loadData { [weak self] result in
             guard let self else { return }
             
             switch result {
-            case .success(let exchangeRate):
-                let remoteExchangeRate = exchangeRate
-                
-                // Core Data에 데이터 존재 ➡️ 기존 값 유지 or 업데이트
-                if let localExchangeRate = CoreDataStorage.shared.fetchData() {
-                    os_log("CoreDataStorage) %@", log: log, type: .debug, "\(localExchangeRate)")
+            case .success(let remoteExchangeRate):
+                if let localExchangeRate = localData {
+                    // Core Data에 데이터 존재 ➡️ 마지막 업데이트 시간 다르면 값 업데이트
                     if localExchangeRate.lastUpdatedUnix != remoteExchangeRate.lastUpdatedUnix {
-                        os_log("CoreDataStorage) outdated", log: log, type: .debug)
-                        remoteExchangeRate.currencies.forEach { currency in
-                            CoreDataStorage.shared.updateData(currency: currency)
-                        }
-                        os_log("CoreDataStorage) update completed", log: log, type: .debug)
+                        CoreDataManager.shared.updateAllData(exchangeRate: remoteExchangeRate)
+                        localData = remoteExchangeRate
                     }
-                    os_log("CoreDataStorage) up-to-date", log: log, type: .debug)
-                
                 } else {
                     // Core Data가 비어있음 ➡️ 저장
-                    CoreDataStorage.shared.saveData(exchangeRate: remoteExchangeRate)
-                    os_log("CoreDataStorage) saved", log: log, type: .debug)
+                    CoreDataManager.shared.saveData(exchangeRate: remoteExchangeRate)
+                    localData = remoteExchangeRate
                 }
-                
-                allCurrencies = Dictionary(uniqueKeysWithValues: exchangeRate.currencies.map { ($0.code, $0) })
+                guard let localData else { return }
+                allCurrencies = Dictionary(uniqueKeysWithValues: localData.currencies.map { ($0.code, $0) })
                 filteredCurrencies = allCurrencies
                 state.needToShowAlert?(false)
                 
             case .failure(_):
-                allCurrencies = [:]
+                if let localExchangeRate = localData {
+                    allCurrencies = Dictionary(uniqueKeysWithValues: localExchangeRate.currencies.map { ($0.code, $0) })
+                } else {
+                    allCurrencies = [:]
+                }
                 filteredCurrencies = allCurrencies
                 state.needToShowAlert?(true)
             }

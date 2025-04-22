@@ -27,7 +27,7 @@ final class CurrencyCell: UITableViewCell {
     private let countryLabel = UILabel().then {
         $0.text = "가상통화 (Crypto Generic)"
         $0.font = .systemFont(ofSize: 14)
-        $0.textColor = .gray
+        $0.textColor = .systemGray
     }
     
     private let labelStackView = UIStackView().then {

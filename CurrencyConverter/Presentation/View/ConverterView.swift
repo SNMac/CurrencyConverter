@@ -21,7 +21,7 @@ final class ConverterView: UIView {
     let countryLabel = UILabel().then {
         $0.text = "가상통화 (Crypto Generic)"
         $0.font = .systemFont(ofSize: 16)
-        $0.textColor = .gray
+        $0.textColor = .systemGray
     }
     
     private let labelStackView = UIStackView().then {

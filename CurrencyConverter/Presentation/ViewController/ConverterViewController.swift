@@ -15,10 +15,8 @@ final class ConverterViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = ConverterViewModel()
+    private let viewModel: ConverterViewModel
     private let disposeBag = DisposeBag()
-    
-    private let currencyModel: Currency
     
     // MARK: - UI Components
     
@@ -38,11 +36,9 @@ final class ConverterViewController: UIViewController {
     
     // MARK: - Initializer
     
-    init(currencyModel: Currency) {
-        self.currencyModel = currencyModel
+    init(viewModel: ConverterViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        
-        converterView.configure(currencyModel: currencyModel)
     }
     
     required init?(coder: NSCoder) {
@@ -73,9 +69,17 @@ private extension ConverterViewController {
         // 잘못된 입력값 Alert 처리
         viewModel.state.alertMessage = { [weak self] message in
             guard let self else { return }
-            if message != "" {
+            if !message.isEmpty {
                 AlertHelper.showAlert(title: "오류", message: message, over: self)
             }
+        }
+        
+        viewModel.state.code = { [weak self] code in
+            self?.converterView.codeLabel.text = code
+        }
+        
+        viewModel.state.country = { [weak self] country in
+            self?.converterView.countryLabel.text = country
         }
         
         // 입력값에 따라 계산된 환율 표시
@@ -86,9 +90,8 @@ private extension ConverterViewController {
         // Action ➡️ ViewModel
         let action = ConverterViewModel.Action(
             buttonTapped: converterView.convertButton.rx.tap.asObservable(),
-            currency: Observable.just(currencyModel.code),
             amountText: converterView.amountTextField.rx.text.orEmpty.asObservable(),
-            rate: Observable.just(currencyModel.rate)
+            didBinding: Observable.just(())
         )
         viewModel.action?(action)
     }
@@ -102,8 +105,8 @@ import SwiftUI
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let model = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
-        ConverterViewController(currencyModel: model).toPreview()
+        let currency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
+        ConverterViewController(viewModel: ConverterViewModel(currency: currency)).toPreview()
     }
 }
 #endif

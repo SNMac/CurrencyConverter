@@ -47,6 +47,7 @@ final class CoreDataManager {
     
     /// ExchangeRate을 매개변수로 받아 ExchangeRateEntity로 변환 후 Core Data에 저장합니다.
     func saveData(exchangeRate: ExchangeRate) {
+        
         let exchangeRateEntity: ExchangeRateEntity = .init(context: context)
         exchangeRateEntity.lastUpdatedUnix = exchangeRate.lastUpdatedUnix
         exchangeRateEntity.baseCode = exchangeRate.baseCode

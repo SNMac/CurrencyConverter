@@ -13,12 +13,12 @@ final class ConverterView: UIView {
     
     // MARK: - UI Components
     
-    private let currencyLabel = UILabel().then {
+    let codeLabel = UILabel().then {
         $0.text = "XCG"
         $0.font = .systemFont(ofSize: 24, weight: .bold)
     }
     
-    private let countryLabel = UILabel().then {
+    let countryLabel = UILabel().then {
         $0.text = "가상통화 (Crypto Generic)"
         $0.font = .systemFont(ofSize: 16)
         $0.textColor = .gray
@@ -65,15 +65,6 @@ final class ConverterView: UIView {
     }
 }
 
-// MARK: - Methods
-
-extension ConverterView {
-    func configure(currencyModel: Currency) {
-        currencyLabel.text = currencyModel.code
-        countryLabel.text = currencyModel.country
-    }
-}
-
 // MARK: - UI Methods
 
 private extension ConverterView {
@@ -91,7 +82,7 @@ private extension ConverterView {
         )
         
         labelStackView.addArrangedSubviews(
-            currencyLabel,
+            codeLabel,
             countryLabel
         )
     }

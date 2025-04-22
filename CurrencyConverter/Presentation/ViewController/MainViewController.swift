@@ -88,8 +88,9 @@ private extension MainViewController {
         mainView.currencyTableView.rx.modelSelected(Currency.self)
             .asDriver()
             .drive(with: self) { owner, model in
-                let currencyModel = Currency(code: model.code, country: model.country, rate: model.rate)
-                let converterVC = ConverterViewController(currencyModel: currencyModel)
+                let currency = Currency(code: model.code, country: model.country, difference: model.difference, rate: model.rate, isFavorite: model.isFavorite)
+                let converterVM = ConverterViewModel(currency: currency)
+                let converterVC = ConverterViewController(viewModel: converterVM)
                 owner.navigationController?.pushViewController(converterVC, animated: true)
             }.disposed(by: disposeBag)
         
@@ -100,9 +101,9 @@ private extension MainViewController {
         
         // Action ➡️ ViewModel
         let action = MainViewModel.Action(
-            didBinding: Observable.just(()),
             searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable(),
-            favoriteCurrency: favoriteCurrency.asObservable()
+            favoriteCurrency: favoriteCurrency.asObservable(),
+            didBinding: Observable.just(())
         )
         viewModel.action?(action)
     }
@@ -114,7 +115,6 @@ private extension MainViewController {
     func showFailedToLoadAlert() {
         AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
     }
-    
     // TODO: 스크롤시 키보드 올라가게 해야함
 }
 

@@ -29,12 +29,12 @@ final class MainViewModel: ViewModelProtocol {
     // MARK: - Action ➡️ Input
     
     struct Action {
-        /// 바인딩 이후 알림
-        let didBinding: Observable<Void>
         /// 검색중인 통화 코드 or 국가명
         let searchText: Observable<String>
         /// 즐겨찾기 상태를 변경한 환율 데이터
         let favoriteCurrency: Observable<Currency>
+        /// 바인딩 완료 알림
+        let didBinding: Observable<Void>
     }
     var action: ((Action) -> Void)?
     

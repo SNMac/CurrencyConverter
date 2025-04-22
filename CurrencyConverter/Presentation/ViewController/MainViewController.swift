@@ -63,8 +63,8 @@ private extension MainViewController {
         }
         
         // CurrencyTableView에 데이터 표시
-        let sortedCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
-        let favoriteCurrency = PublishRelay<CurrencyModel>()
+        let sortedCurrencies = BehaviorRelay<[Currency]>(value: [])
+        let favoriteCurrency = PublishRelay<Currency>()
         sortedCurrencies
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
@@ -85,10 +85,10 @@ private extension MainViewController {
         }
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
-        mainView.currencyTableView.rx.modelSelected(CurrencyModel.self)
+        mainView.currencyTableView.rx.modelSelected(Currency.self)
             .asDriver()
             .drive(with: self) { owner, model in
-                let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
+                let currencyModel = Currency(code: model.code, country: model.country, rate: model.rate)
                 let converterVC = ConverterViewController(currencyModel: currencyModel)
                 owner.navigationController?.pushViewController(converterVC, animated: true)
             }.disposed(by: disposeBag)

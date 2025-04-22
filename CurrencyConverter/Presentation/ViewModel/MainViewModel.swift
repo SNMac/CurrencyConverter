@@ -22,9 +22,9 @@ final class MainViewModel: ViewModelProtocol {
     private let disposeBag = DisposeBag()
     
     /// 모든 환율 데이터
-    private var allCurrencies = [String: CurrencyModel]()
+    private var allCurrencies = [String: Currency]()
     /// 필터링된 환율 데이터
-    private var filteredCurrencies = [String: CurrencyModel]()
+    private var filteredCurrencies = [String: Currency]()
     
     // MARK: - Action ➡️ Input
     
@@ -34,7 +34,7 @@ final class MainViewModel: ViewModelProtocol {
         /// 검색중인 통화 코드 or 국가명
         let searchText: Observable<String>
         /// 즐겨찾기 상태를 변경한 환율 데이터
-        let favoriteCurrency: Observable<CurrencyModel>
+        let favoriteCurrency: Observable<Currency>
     }
     var action: ((Action) -> Void)?
     
@@ -44,7 +44,7 @@ final class MainViewModel: ViewModelProtocol {
         /// 데이터를 불러오는 중 에러 발생 시 true, 이외 false
         var needToShowAlert: ((Bool) -> Void)?
         /// 필터링 & 정렬된 환율 데이터
-        var sortedCurrencies: (([CurrencyModel]) -> Void)?
+        var sortedCurrencies: (([Currency]) -> Void)?
         /// "검색 결과 없음" 표시 용도
         var isHiddenEmptyLabel: ((Bool) -> Void)?
     }
@@ -60,15 +60,17 @@ final class MainViewModel: ViewModelProtocol {
             
             // 즐겨찾기 상태 데이터에 반영
             action.favoriteCurrency
-                .subscribe(with: self) { owner, model in
-                    var updatedModel = model
-                    updatedModel.isFavorite.toggle()
-                    let logMsg = "(currency: \(updatedModel.currency), isFavorite: \(updatedModel.isFavorite))"
-                    os_log("updatedModel: %@", log: owner.log, type: .debug, logMsg)
-                    owner.allCurrencies[updatedModel.currency] = updatedModel
-                    owner.filteredCurrencies[updatedModel.currency] = updatedModel
+                .subscribe(with: self, onNext: { owner, currency in
+                    var updatedCurrency = currency
+                    updatedCurrency.isFavorite.toggle()
+                    CoreDataStorage.shared.updateData(currency: currency)
+                    let logMsg = "(currency: \(updatedCurrency.code), isFavorite: \(updatedCurrency.isFavorite))"
+                    os_log("updatedCurrency: %@", log: owner.log, type: .debug, logMsg)
+                    
+                    owner.allCurrencies[updatedCurrency.code] = updatedCurrency
+                    owner.filteredCurrencies[updatedCurrency.code] = updatedCurrency
                     owner.acceptSortedCurrencies()
-                }.disposed(by: disposeBag)
+                }).disposed(by: disposeBag)
             
             // 검색어 변경될 때마다 데이터 필터링 및 정렬
             action.searchText
@@ -79,7 +81,7 @@ final class MainViewModel: ViewModelProtocol {
                      - ex) "레일리아" 검색 ➡️ "오스트레일리아" 결과 포함
                      */
                     owner.filteredCurrencies = owner.allCurrencies.filter {
-                        $0.value.currency.hasPrefix(searchText.uppercased()) ||
+                        $0.value.code.hasPrefix(searchText.uppercased()) ||
                         $0.value.country.lowercased().contains(searchText.lowercased())
                     }
                     os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, owner.filteredCurrencies.values.count)
@@ -108,11 +110,27 @@ private extension MainViewModel {
             
             switch result {
             case .success(let exchangeRate):
-                let currencies = exchangeRate.rates.map {
-                    let country = self.currencyMap[$0.key] ?? ""
-                    return CurrencyModel(currency: $0.key, country: country, rate: $0.value)
+                let remoteExchangeRate = exchangeRate
+                
+                // Core Data에 데이터 존재 ➡️ 기존 값 유지 or 업데이트
+                if let localExchangeRate = CoreDataStorage.shared.fetchData() {
+                    os_log("CoreDataStorage) %@", log: log, type: .debug, "\(localExchangeRate)")
+                    if localExchangeRate.lastUpdatedUnix != remoteExchangeRate.lastUpdatedUnix {
+                        os_log("CoreDataStorage) outdated", log: log, type: .debug)
+                        remoteExchangeRate.currencies.forEach { currency in
+                            CoreDataStorage.shared.updateData(currency: currency)
+                        }
+                        os_log("CoreDataStorage) update completed", log: log, type: .debug)
+                    }
+                    os_log("CoreDataStorage) up-to-date", log: log, type: .debug)
+                
+                } else {
+                    // Core Data가 비어있음 ➡️ 저장
+                    CoreDataStorage.shared.saveData(exchangeRate: remoteExchangeRate)
+                    os_log("CoreDataStorage) saved", log: log, type: .debug)
                 }
-                allCurrencies = Dictionary(uniqueKeysWithValues: currencies.map { ($0.currency, $0) })
+                
+                allCurrencies = Dictionary(uniqueKeysWithValues: exchangeRate.currencies.map { ($0.code, $0) })
                 filteredCurrencies = allCurrencies
                 state.needToShowAlert?(false)
                 
@@ -128,7 +146,7 @@ private extension MainViewModel {
     func acceptSortedCurrencies() {
         let sortedCurrencies = filteredCurrencies.values.sorted {
             if $0.isFavorite == $1.isFavorite {
-                return $0.currency < $1.currency
+                return $0.code < $1.code
             }
             return $0.isFavorite == true
         }

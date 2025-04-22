@@ -2,19 +2,13 @@
 //  ExchangeRate.swift
 //  CurrencyConverter
 //
-//  Created by 서동환 on 4/15/25.
+//  Created by 서동환 on 4/22/25.
 //
 
 import Foundation
 
-struct ExchangeRate: Codable {
-    let result: String
+struct ExchangeRate {
+    let lastUpdatedUnix: Double
     let baseCode: String
-    let rates: [String: Double]
-
-    enum CodingKeys: String, CodingKey {
-        case result
-        case baseCode = "base_code"
-        case rates
-    }
+    var currencies: [Currency]
 }

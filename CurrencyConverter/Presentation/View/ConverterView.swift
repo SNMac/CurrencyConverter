@@ -68,8 +68,8 @@ final class ConverterView: UIView {
 // MARK: - Methods
 
 extension ConverterView {
-    func configure(currencyModel: CurrencyModel) {
-        currencyLabel.text = currencyModel.currency
+    func configure(currencyModel: Currency) {
+        currencyLabel.text = currencyModel.code
         countryLabel.text = currencyModel.country
     }
 }

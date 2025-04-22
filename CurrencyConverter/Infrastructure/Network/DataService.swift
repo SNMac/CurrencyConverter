@@ -29,12 +29,12 @@ final class DataService {
             switch result {
             case .success(let data):
                 do {
-                    let exchangeRate = try JSONDecoder().decode(ExchangeRate.self, from: data)
-                    os_log("currency: %@", log: self.log, type: .debug, "\(exchangeRate)")
-                    completion(.success(exchangeRate))
+                    let exchangeRateDTO = try JSONDecoder().decode(ExchangeRateDTO.self, from: data)
+                    os_log("exchangeRate: %@", log: log, type: .debug, "\(exchangeRateDTO)")
+                    completion(.success(exchangeRateDTO.toDomain()))
                 } catch {
                     let message = DataError.parsingFailed.rawValue + ": \(error)"
-                    os_log("%@: %@", log: self.log, type: .error, message)
+                    os_log("%@", log: log, type: .error, message)
                     completion(.failure(DataError.parsingFailed))
                 }
                 

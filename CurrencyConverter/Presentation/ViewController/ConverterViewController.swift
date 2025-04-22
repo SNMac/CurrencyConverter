@@ -18,7 +18,7 @@ final class ConverterViewController: UIViewController {
     private let viewModel = ConverterViewModel()
     private let disposeBag = DisposeBag()
     
-    private let currencyModel: CurrencyModel
+    private let currencyModel: Currency
     
     // MARK: - UI Components
     
@@ -38,7 +38,7 @@ final class ConverterViewController: UIViewController {
     
     // MARK: - Initializer
     
-    init(currencyModel: CurrencyModel) {
+    init(currencyModel: Currency) {
         self.currencyModel = currencyModel
         super.init(nibName: nil, bundle: nil)
         
@@ -86,7 +86,7 @@ private extension ConverterViewController {
         // Action ➡️ ViewModel
         let action = ConverterViewModel.Action(
             buttonTapped: converterView.convertButton.rx.tap.asObservable(),
-            currency: Observable.just(currencyModel.currency),
+            currency: Observable.just(currencyModel.code),
             amountText: converterView.amountTextField.rx.text.orEmpty.asObservable(),
             rate: Observable.just(currencyModel.rate)
         )
@@ -102,7 +102,7 @@ import SwiftUI
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let model = CurrencyModel(currency: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
+        let model = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
         ConverterViewController(currencyModel: model).toPreview()
     }
 }

@@ -85,8 +85,8 @@ final class CurrencyCell: UITableViewCell {
 // MARK: - Methods
 
 extension CurrencyCell {
-    func configure(currencyModel: CurrencyModel) {
-        currencyLabel.text = currencyModel.currency
+    func configure(currencyModel: Currency) {
+        currencyLabel.text = currencyModel.code
         countryLabel.text = currencyModel.country
         rateLabel.text = String(format: "%.4f", currencyModel.rate)
         favoriteButton.isSelected = currencyModel.isFavorite

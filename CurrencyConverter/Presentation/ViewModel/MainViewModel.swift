@@ -110,33 +110,44 @@ private extension MainViewModel {
             
             switch result {
             case .success(let remoteExchangeRate):
+                state.needToShowAlert?(false)
+                
                 if let localExchangeRate = localData {
                     // Core Data에 데이터 존재 ➡️ 마지막 업데이트 시간 다르면 값 업데이트
                     if localExchangeRate.lastUpdatedUnix != remoteExchangeRate.lastUpdatedUnix {
-                        CoreDataManager.shared.updateAllData(exchangeRate: remoteExchangeRate)
-                        localData = remoteExchangeRate
+                        CoreDataManager.shared.updateAllData(exchangeRate: remoteExchangeRate) {
+                            guard let updatedLocal = CoreDataManager.shared.fetchData() else { return }
+                            self.updateCurrencies(with: updatedLocal)
+                            localData = CoreDataManager.shared.fetchData()
+                        }
+                    } else {
+                        updateCurrencies(with: localExchangeRate)
                     }
                 } else {
                     // Core Data가 비어있음 ➡️ 저장
                     CoreDataManager.shared.saveData(exchangeRate: remoteExchangeRate)
-                    localData = remoteExchangeRate
+                    updateCurrencies(with: remoteExchangeRate)
                 }
-                guard let localData else { return }
-                allCurrencies = Dictionary(uniqueKeysWithValues: localData.currencies.map { ($0.code, $0) })
-                filteredCurrencies = allCurrencies
-                state.needToShowAlert?(false)
                 
             case .failure(_):
+                state.needToShowAlert?(true)
+                
                 if let localExchangeRate = localData {
-                    allCurrencies = Dictionary(uniqueKeysWithValues: localExchangeRate.currencies.map { ($0.code, $0) })
+                    updateCurrencies(with: localExchangeRate)
                 } else {
                     allCurrencies = [:]
+                    filteredCurrencies = [:]
+                    acceptSortedCurrencies()
                 }
-                filteredCurrencies = allCurrencies
-                state.needToShowAlert?(true)
+                
             }
-            acceptSortedCurrencies()
         }
+    }
+    
+    func updateCurrencies(with exchangeRate: ExchangeRate) {
+        allCurrencies = Dictionary(uniqueKeysWithValues: exchangeRate.currencies.map { ($0.code, $0) })
+        filteredCurrencies = allCurrencies
+        acceptSortedCurrencies()
     }
     
     func acceptSortedCurrencies() {

@@ -44,7 +44,6 @@ final class CurrencyCell: UITableViewCell {
     private let arrowLabel = UILabel().then {
         $0.text = "🔼"
         $0.textAlignment = .center
-        $0.isHidden = false
     }
     
     let favoriteButton = UIButton().then {
@@ -96,6 +95,8 @@ extension CurrencyCell {
         countryLabel.text = currency.country
         rateLabel.text = String(format: "%.4f", currency.rate)
         favoriteButton.isSelected = currency.isFavorite
+        
+        arrowLabel.isHidden = false
         if currency.difference > 0.01 {
             arrowLabel.text = "🔼"
         } else if currency.difference < -0.01 {

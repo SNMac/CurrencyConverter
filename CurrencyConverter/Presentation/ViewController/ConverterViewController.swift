@@ -105,7 +105,7 @@ import SwiftUI
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let currency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
+        let currency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", difference: 0.0, rate: 1.7900, isFavorite: false)
         ConverterViewController(viewModel: ConverterViewModel(currency: currency)).toPreview()
     }
 }

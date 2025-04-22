@@ -48,6 +48,6 @@ extension ExchangeRateDTO {
 
 extension ExchangeRateDTO.CurrencyDTO {
     func toDomain() -> Currency {
-        Currency(code: code, country: country, rate: rate)
+        Currency(code: code, country: country, difference: rate, rate: rate, isFavorite: false)
     }
 }

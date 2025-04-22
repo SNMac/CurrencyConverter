@@ -76,7 +76,7 @@ final class ConverterViewModel: ViewModelProtocol {
                     let amount = Double(amountText) ?? 0.0
                     let showingAmount = String(format: "%.2f", amount)
                     let showingConverted = String(format: "%.2f", amount * currency.rate)
-                    return "$\(showingAmount) → \(showingConverted) \(currency)"
+                    return "$\(showingAmount) → \(showingConverted) \(currency.code)"
                 }.bind(with: self) { owner, result in
                     owner.state.convertedResult?(result)
                 }.disposed(by: disposeBag)

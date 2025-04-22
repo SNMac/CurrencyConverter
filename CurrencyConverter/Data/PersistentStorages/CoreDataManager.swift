@@ -46,6 +46,7 @@ final class CoreDataManager {
         }
     }
     
+    /// Core Data 비동기 작업
     func performBackgroundTask(_ block: @escaping (NSManagedObjectContext) -> Void) {
         persistentContainer.performBackgroundTask(block)
     }
@@ -126,20 +127,22 @@ final class CoreDataManager {
     
     /// Currency 배열을 매개변수로 받아 CoreData에서 code에 해당하는 CurrencyEntity의 isFavorite를 수정합니다.
     func updateIsFavorite(currency: Currency) {
-        guard let currencyEntity = fetchEntity(code: currency.code, in: context) else { return }
-        currencyEntity.isFavorite = currency.isFavorite
-        
-        do {
-            try context.save()
-            os_log("CoreDataStorage) isFavorite updated: %@", log: CoreDataManager.log, type: .debug, "\(currencyEntity.toDomain())")
+        performBackgroundTask { context in
+            guard let currencyEntity = self.fetchEntity(code: currency.code, in: context) else { return }
+            currencyEntity.isFavorite = currency.isFavorite
             
-        } catch {
-            let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+            do {
+                try context.save()
+                os_log("CoreDataStorage) isFavorite updated: %@", log: CoreDataManager.log, type: .debug, "\(currencyEntity.toDomain())")
+                
+            } catch {
+                let msg = error.localizedDescription
+                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+            }
         }
     }
     
-    /// Core Data에서 code에 해당하는 CurrencyEntity 반환
+    /// Core Data에서 code에 해당하는 CurrencyEntity를 반환합니다.(context는 비동기 작업을 위한 매개변수)
     func fetchEntity(code: String, in context: NSManagedObjectContext) -> CurrencyEntity? {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>.init(entityName: "CurrencyEntity")
         fetchRequest.predicate = NSPredicate(format: "code = %@", code)

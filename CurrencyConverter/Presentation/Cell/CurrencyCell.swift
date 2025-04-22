@@ -19,7 +19,7 @@ final class CurrencyCell: UITableViewCell {
     
     // MARK: - UI Components
     
-    private let currencyLabel = UILabel().then {
+    private let codeLabel = UILabel().then {
         $0.text = "XCG"
         $0.font = .systemFont(ofSize: 16, weight: .medium)
     }
@@ -91,7 +91,7 @@ final class CurrencyCell: UITableViewCell {
 
 extension CurrencyCell {
     func configure(currency: Currency) {
-        currencyLabel.text = currency.code
+        codeLabel.text = currency.code
         countryLabel.text = currency.country
         rateLabel.text = String(format: "%.4f", currency.rate)
         favoriteButton.isSelected = currency.isFavorite
@@ -119,7 +119,7 @@ private extension CurrencyCell {
         self.contentView.addSubviews(labelStackView, rateLabel, arrowLabel, favoriteButton)
         
         labelStackView.addArrangedSubviews(
-            currencyLabel,
+            codeLabel,
             countryLabel
         )
     }

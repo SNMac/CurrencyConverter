@@ -8,7 +8,7 @@
 import Foundation
 
 protocol ViewModelProtocol {
-    /// ViewModel Output ➡️ State
+    /// ViewModel Action ➡️ Input
     associatedtype Action
     /// ViewModel Output ➡️ State
     associatedtype State

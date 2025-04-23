@@ -100,7 +100,7 @@ private extension ConverterView {
         // height = 44
         amountTextField.snp.makeConstraints {
             $0.top.equalTo(labelStackView.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
             $0.height.equalTo(44)
         }
         
@@ -109,7 +109,7 @@ private extension ConverterView {
         // height = 44
         convertButton.snp.makeConstraints {
             $0.top.equalTo(amountTextField.snp.bottom).offset(24)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
             $0.height.equalTo(44)
         }
         
@@ -117,7 +117,7 @@ private extension ConverterView {
         // leading, trailing = superView ± 24
         resultLabel.snp.makeConstraints {
             $0.top.equalTo(convertButton.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
         }
     }
     

@@ -20,7 +20,7 @@ final class ConverterViewModel: ViewModelProtocol {
     // MARK: - Action ➡️ Input
     
     struct Action {
-        /// 버튼 눌렸을 때 발생하는 이벤트
+        /// 버튼 눌렀을 때 발생하는 이벤트
         let buttonTapped: Observable<Void>
         /// 사용자의 입력값(USD)
         let amountText: Observable<String>
@@ -38,7 +38,7 @@ final class ConverterViewModel: ViewModelProtocol {
         var code: ((String) -> Void)?
         /// 국가명
         var country: ((String) -> Void)?
-        /// 변환된 환율
+        /// 변환된(=계산된) 환율
         var convertedResult: ((String) -> Void)?
     }
     var state: State
@@ -90,9 +90,5 @@ final class ConverterViewModel: ViewModelProtocol {
                     owner.state.country?(owner.currency.country)
                 }.disposed(by: disposeBag)
         }
-    }
-    
-    deinit {
-        CoreDataManager.shared.deleteLastConverter()
     }
 }

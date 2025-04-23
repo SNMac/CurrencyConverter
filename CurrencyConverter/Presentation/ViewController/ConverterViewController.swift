@@ -18,6 +18,8 @@ final class ConverterViewController: UIViewController {
     private let viewModel: ConverterViewModel
     private let disposeBag = DisposeBag()
     
+    weak var viewWillDisappearDelegate: ViewWillDisappearDelegate?
+    
     // MARK: - UI Components
     
     private let converterView = ConverterView()
@@ -27,7 +29,6 @@ final class ConverterViewController: UIViewController {
     init(viewModel: ConverterViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.restorationIdentifier = "ConverterViewController"
     }
     
     required init?(coder: NSCoder) {
@@ -44,6 +45,13 @@ final class ConverterViewController: UIViewController {
         
         setupUI()
         bind()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if self.isMovingFromParent {
+            viewWillDisappearDelegate?.notifyViewWillDisappear()
+        }
     }
 }
 
@@ -105,11 +113,14 @@ import SwiftUI
 
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
-        let mockCurrency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", difference: 0.0, rate: 1.7900, isFavorite: false)
-        let converterVM = ConverterViewModel(currency: mockCurrency)
+        let mockCurrency = Currency(code: "XCG",
+                                    country: "가상통화 (Crypto Generic)",
+                                    difference: 0.0,
+                                    rate: 1.7900,
+                                    isFavorite: false)
         
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        ConverterViewController(viewModel: converterVM).toPreview()
+        ConverterViewController(viewModel: ConverterViewModel(currency: mockCurrency)).toPreview()
     }
 }
 #endif

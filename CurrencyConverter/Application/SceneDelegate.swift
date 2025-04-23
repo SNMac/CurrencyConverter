@@ -19,13 +19,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
         
-        let mainVM = MainViewModel()
-        let mainVC = MainViewController(viewModel: mainVM)
+        let mainVC = MainViewController(viewModel: MainViewModel())
         window.rootViewController = UINavigationController(rootViewController: mainVC)
         if let lastCurrency = CoreDataManager.shared.fetchLastConverter() {
             DispatchQueue.main.async {
-                let converterVM = ConverterViewModel(currency: lastCurrency)
-                let converterVC = ConverterViewController(viewModel: converterVM)
+                let converterVC = ConverterViewController(viewModel: ConverterViewModel(currency: lastCurrency))
+                converterVC.viewWillDisappearDelegate = mainVC
                 mainVC.navigationController?.pushViewController(converterVC, animated: true)
             }
         }

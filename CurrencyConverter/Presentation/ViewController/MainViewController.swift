@@ -96,6 +96,7 @@ private extension MainViewController {
         }
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
+        let didPushConverterVC = PublishRelay<String>()
         mainView.currencyTableView.rx.modelSelected(Currency.self)
             .asDriver()
             .drive(with: self) { owner, currency in
@@ -104,14 +105,14 @@ private extension MainViewController {
                                         difference: currency.difference,
                                         rate: currency.rate,
                                         isFavorite: currency.isFavorite)
-                let converterVM = ConverterViewModel(currency: currency)
-                let converterVC = ConverterViewController(viewModel: converterVM)
+                let converterVC = ConverterViewController(viewModel: ConverterViewModel(currency: currency))
+                converterVC.viewWillDisappearDelegate = self
                 owner.navigationController?.pushViewController(converterVC, animated: true)
-                CoreDataManager.shared.saveLastConverter(currencyCode: currency.code)
+                didPushConverterVC.accept(currency.code)
             }.disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        viewModel.state.isHiddenEmptyLabel = { [weak self] isHidden in
+        viewModel.state.needToHideEmptyLabel = { [weak self] isHidden in
             self?.mainView.emptyStateLabel.isHidden = isHidden
         }
         
@@ -119,6 +120,7 @@ private extension MainViewController {
         let action = MainViewModel.Action(
             searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable(),
             favoriteCurrency: favoriteCurrency.asObservable(),
+            didPushConverterVC: didPushConverterVC.asObservable(),
             didBinding: Observable.just(())
         )
         viewModel.action?(action)
@@ -134,6 +136,14 @@ private extension MainViewController {
     // TODO: 스크롤시 키보드 올라가게 해야함
 }
 
+// MARK: - ViewWillDisappearDelegate
+
+extension MainViewController: ViewWillDisappearDelegate {
+    func notifyViewWillDisappear() {
+        viewModel.deleteLastConverterCoreData()
+    }
+}
+
 // MARK: - PreviewProvider
 
 #if DEBUG
@@ -141,10 +151,8 @@ import SwiftUI
 
 struct MainViewControllerPreview: PreviewProvider {
     static var previews: some View {
-        let mainVM = MainViewModel()
-        
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        MainViewController(viewModel: mainVM).toPreview()
+        MainViewController(viewModel: MainViewModel()).toPreview()
     }
 }
 #endif

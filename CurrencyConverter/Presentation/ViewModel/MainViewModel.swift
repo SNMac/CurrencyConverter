@@ -17,7 +17,6 @@ final class MainViewModel: ViewModelProtocol {
     private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "MainViewModel")
     
     private let dataService = DataService()
-    private let currencyMap = currencyMapping
     
     private let disposeBag = DisposeBag()
     
@@ -29,10 +28,12 @@ final class MainViewModel: ViewModelProtocol {
     // MARK: - Action ➡️ Input
     
     struct Action {
-        /// 검색중인 통화 코드 or 국가명
+        /// 검색창에 입력한 텍스트(통화 코드 or 국가명)
         let searchText: Observable<String>
-        /// 즐겨찾기 상태를 변경한 환율 데이터
+        /// 즐겨찾기 상태를 변경한 Currency
         let favoriteCurrency: Observable<Currency>
+        /// ConverterViewController push 알림 (Currency.code)
+        let didPushConverterVC: Observable<String>
         /// 바인딩 완료 알림
         let didBinding: Observable<Void>
     }
@@ -43,10 +44,10 @@ final class MainViewModel: ViewModelProtocol {
     struct State {
         /// 데이터를 불러오는 중 에러 발생 시 true, 이외 false
         var needToShowAlert: ((Bool) -> Void)?
-        /// 필터링 & 정렬된 환율 데이터
+        /// 필터링 & 정렬된 Currency 배열
         var sortedCurrencies: (([Currency]) -> Void)?
         /// "검색 결과 없음" 표시 용도
-        var isHiddenEmptyLabel: ((Bool) -> Void)?
+        var needToHideEmptyLabel: ((Bool) -> Void)?
     }
     var state: State
     
@@ -87,8 +88,14 @@ final class MainViewModel: ViewModelProtocol {
                     
                     // 검색 결과가 없을 경우 "검색 결과 없음" 표시
                     let isHidden = searchText.isEmpty == true || owner.filteredCurrencies.isEmpty == false
-                    owner.state.isHiddenEmptyLabel?(isHidden)
+                    owner.state.needToHideEmptyLabel?(isHidden)
                 }.disposed(by: disposeBag)
+            
+            // ConverterViewController가 push 됐을 때 상태 저장
+            action.didPushConverterVC
+                .subscribe(onNext: { code in
+                    CoreDataManager.shared.saveLastConverter(currencyCode: code)
+                }).disposed(by: disposeBag)
             
             // 바인딩 완료 후 데이터 로딩
             action.didBinding
@@ -96,6 +103,12 @@ final class MainViewModel: ViewModelProtocol {
                     owner.loadCurrencies()
                 }.disposed(by: disposeBag)
         }
+    }
+    
+    // MARK: - Methods
+    
+    func deleteLastConverterCoreData() {
+        CoreDataManager.shared.deleteLastConverter()
     }
 }
 
@@ -139,7 +152,6 @@ private extension MainViewModel {
                     filteredCurrencies = [:]
                     acceptSortedCurrencies()
                 }
-                
             }
         }
     }

@@ -68,10 +68,11 @@ private extension MainView {
         }
         
         // top = searchBar.bottom
-        // leading, trailing, bottom = safeAreaLayoutGuide
+        // leading, trailing = safeAreaLayoutGuide
         currencyTableView.snp.makeConstraints {
             $0.top.equalTo(currencySearchBar.snp.bottom)
-            $0.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide)
+            $0.bottom.equalToSuperview()
         }
     }
     

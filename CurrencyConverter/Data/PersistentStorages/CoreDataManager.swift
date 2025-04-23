@@ -13,7 +13,7 @@ final class CoreDataManager {
     
     static let shared = CoreDataManager()
     
-    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CoreDataStorage")
+    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CoreDataManager")
     
     // MARK: - Core Data stack
     
@@ -56,7 +56,7 @@ final class CoreDataManager {
     /// ExchangeRate을 매개변수로 받아 ExchangeRateEntity로 변환 후 Core Data에 저장합니다.
     func saveData(exchangeRate: ExchangeRate) {
         performBackgroundTask { context in
-            let exchangeRateEntity: ExchangeRateEntity = .init(context: context)
+            let exchangeRateEntity = ExchangeRateEntity(context: context)
             exchangeRateEntity.lastUpdatedUnix = exchangeRate.lastUpdatedUnix
             exchangeRateEntity.baseCode = exchangeRate.baseCode
             

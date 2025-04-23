@@ -15,12 +15,23 @@ final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = MainViewModel()
+    private let viewModel: MainViewModel
     private let disposeBag = DisposeBag()
     
     // MARK: - UI Components
     
     private let mainView = MainView()
+    
+    // MARK: - Initializer
+    
+    init(viewModel: MainViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
     
@@ -69,14 +80,14 @@ private extension MainViewController {
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, model, cell in
-                    cell.configure(currency: model)
+                cellType: CurrencyCell.self)) { _, currency, cell in
+                    cell.configure(currency: currency)
                     
                     // 즐겨찾기 버튼 바인딩
                     cell.favoriteButton.rx.tap
                         .asDriver()
                         .drive(onNext: {
-                            favoriteCurrency.accept(model)
+                            favoriteCurrency.accept(currency)
                         })
                         .disposed(by: cell.disposeBag)
                 }.disposed(by: disposeBag)
@@ -87,8 +98,12 @@ private extension MainViewController {
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
         mainView.currencyTableView.rx.modelSelected(Currency.self)
             .asDriver()
-            .drive(with: self) { owner, model in
-                let currency = Currency(code: model.code, country: model.country, difference: model.difference, rate: model.rate, isFavorite: model.isFavorite)
+            .drive(with: self) { owner, currency in
+                let currency = Currency(code: currency.code,
+                                        country: currency.country,
+                                        difference: currency.difference,
+                                        rate: currency.rate,
+                                        isFavorite: currency.isFavorite)
                 let converterVM = ConverterViewModel(currency: currency)
                 let converterVC = ConverterViewController(viewModel: converterVM)
                 owner.navigationController?.pushViewController(converterVC, animated: true)
@@ -125,8 +140,10 @@ import SwiftUI
 
 struct MainViewControllerPreview: PreviewProvider {
     static var previews: some View {
+        let mainVM = MainViewModel()
+        
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        MainViewController().toPreview()
+        MainViewController(viewModel: mainVM).toPreview()
     }
 }
 #endif

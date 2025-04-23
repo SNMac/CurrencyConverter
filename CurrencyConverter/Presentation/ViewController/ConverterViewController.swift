@@ -22,6 +22,17 @@ final class ConverterViewController: UIViewController {
     
     private let converterView = ConverterView()
     
+    // MARK: - Initializer
+    
+    init(viewModel: ConverterViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
@@ -32,17 +43,6 @@ final class ConverterViewController: UIViewController {
         
         setupUI()
         bind()
-    }
-    
-    // MARK: - Initializer
-    
-    init(viewModel: ConverterViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }
 
@@ -104,9 +104,11 @@ import SwiftUI
 
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
+        let mockCurrency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", difference: 0.0, rate: 1.7900, isFavorite: false)
+        let converterVM = ConverterViewModel(currency: mockCurrency)
+        
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let currency = Currency(code: "XCG", country: "가상통화 (Crypto Generic)", difference: 0.0, rate: 1.7900, isFavorite: false)
-        ConverterViewController(viewModel: ConverterViewModel(currency: currency)).toPreview()
+        ConverterViewController(viewModel: converterVM).toPreview()
     }
 }
 #endif

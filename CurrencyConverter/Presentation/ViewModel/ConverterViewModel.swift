@@ -13,19 +13,19 @@ final class ConverterViewModel: ViewModelProtocol {
     
     // MARK: - Properties
     
+    private let currency: Currency
+    
     private let disposeBag = DisposeBag()
     
     // MARK: - Action ➡️ Input
     
     struct Action {
-        /// 버튼 눌렸을 때 발생하는 이벤트
+        /// 버튼 눌렀을 때 발생하는 이벤트
         let buttonTapped: Observable<Void>
-        /// 통화 코드
-        let currency: Observable<String>
         /// 사용자의 입력값(USD)
         let amountText: Observable<String>
-        /// 통화 코드에 따른 환율
-        let rate: Observable<Double>
+        /// 바인딩 완료 알림
+        let didBinding: Observable<Void>
     }
     var action: ((Action) -> Void)?
     
@@ -34,14 +34,20 @@ final class ConverterViewModel: ViewModelProtocol {
     struct State {
         /// Alert에 표시할 메시지
         var alertMessage: ((String) -> Void)?
-        /// 변환된 환율
+        /// 통화 코드
+        var code: ((String) -> Void)?
+        /// 국가명
+        var country: ((String) -> Void)?
+        /// 변환된(=계산된) 환율
         var convertedResult: ((String) -> Void)?
     }
     var state: State
     
     // MARK: - Initializer
     
-    init() {
+    init(currency: Currency) {
+        self.currency = currency
+        
         state = State()
         
         action = { [weak self] action in
@@ -64,17 +70,24 @@ final class ConverterViewModel: ViewModelProtocol {
             
             // 버튼이 눌렸을 때) 입력값에 따른 환율 계산
             action.buttonTapped
-                .withLatestFrom(Observable.combineLatest(action.currency, action.amountText, action.rate))
-                .filter({ _, amountText, _ in
-                    !amountText.isEmpty && Double(amountText) != nil
-                })
-                .map { currency, amountText, rate in
+                .withLatestFrom(action.amountText)
+                .filter({ !$0.isEmpty && Double($0) != nil })
+                .map { amountText in
                     let amount = Double(amountText) ?? 0.0
                     let showingAmount = String(format: "%.2f", amount)
-                    let showingConverted = String(format: "%.2f", amount * rate)
-                    return "$\(showingAmount) → \(showingConverted) \(currency)"
-                }.bind(with: self) { owner, result in
+                    let showingConverted = String(format: "%.2f", amount * currency.rate)
+                    return "$\(showingAmount) → \(showingConverted) \(currency.code)"
+                }
+                .bind(with: self) { owner, result in
                     owner.state.convertedResult?(result)
+                }.disposed(by: disposeBag)
+            
+            // 바인딩 완료 이후) 화면에 표시할 데이터 전송
+            action.didBinding
+                .observe(on: MainScheduler.instance)
+                .bind(with: self) { owner, _ in
+                    owner.state.code?(owner.currency.code)
+                    owner.state.country?(owner.currency.country)
                 }.disposed(by: disposeBag)
         }
     }

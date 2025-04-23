@@ -20,7 +20,7 @@ final class MainView: UIView {
     let emptyStateLabel = UILabel().then {
         $0.text = "검색 결과 없음"
         $0.font = .systemFont(ofSize: 16)
-        $0.textColor = .gray
+        $0.textColor = .systemGray
         $0.textAlignment = .center
         $0.isHidden = true
     }
@@ -68,10 +68,11 @@ private extension MainView {
         }
         
         // top = searchBar.bottom
-        // leading, trailing, bottom = safeAreaLayoutGuide
+        // leading, trailing = safeAreaLayoutGuide
         currencyTableView.snp.makeConstraints {
             $0.top.equalTo(currencySearchBar.snp.bottom)
-            $0.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide)
+            $0.bottom.equalToSuperview()
         }
     }
     

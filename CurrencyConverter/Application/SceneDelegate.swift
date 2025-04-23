@@ -18,7 +18,17 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = UINavigationController(rootViewController: MainViewController())
+        
+        let mainVC = MainViewController(viewModel: MainViewModel())
+        window.rootViewController = UINavigationController(rootViewController: mainVC)
+        if let lastCurrency = CoreDataManager.shared.fetchLastConverter() {
+            DispatchQueue.main.async {
+                let converterVC = ConverterViewController(viewModel: ConverterViewModel(currency: lastCurrency))
+                converterVC.viewWillDisappearDelegate = mainVC
+                mainVC.navigationController?.pushViewController(converterVC, animated: true)
+            }
+        }
+        
         window.makeKeyAndVisible()
         self.window = window
     }
@@ -51,9 +61,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // to restore the scene back to its current state.
 
         // Save changes in the application's managed object context when the application transitions to the background.
-        (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
+        CoreDataManager.shared.saveContext()
     }
-
-
 }
-

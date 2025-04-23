@@ -15,12 +15,23 @@ final class MainViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = MainViewModel()
+    private let viewModel: MainViewModel
     private let disposeBag = DisposeBag()
     
     // MARK: - UI Components
     
     private let mainView = MainView()
+    
+    // MARK: - Initializer
+    
+    init(viewModel: MainViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
     
@@ -63,36 +74,55 @@ private extension MainViewController {
         }
         
         // CurrencyTableView에 데이터 표시
-        let showingCurrencies = BehaviorRelay<[CurrencyModel]>(value: [])
-        showingCurrencies
+        let sortedCurrencies = BehaviorRelay<[Currency]>(value: [])
+        let favoriteCurrency = PublishRelay<Currency>()
+        sortedCurrencies
             .asDriver()
             .drive(mainView.currencyTableView.rx.items(
                 cellIdentifier: CurrencyCell.identifier,
-                cellType: CurrencyCell.self)) { _, model, cell in
-                    cell.configure(currencyModel: model)
+                cellType: CurrencyCell.self)) { _, currency, cell in
+                    cell.configure(currency: currency)
+                    
+                    // 즐겨찾기 버튼 바인딩
+                    cell.favoriteButton.rx.tap
+                        .asDriver()
+                        .drive(onNext: {
+                            favoriteCurrency.accept(currency)
+                        })
+                        .disposed(by: cell.disposeBag)
                 }.disposed(by: disposeBag)
-        viewModel.state.filteredCurrencies = { currencies in
-            showingCurrencies.accept(currencies)
+        viewModel.state.sortedCurrencies = { currencies in
+            sortedCurrencies.accept(currencies)
         }
         
         // CurrencyTableView 셀 선택 시 ConverterViewController 표시
-        mainView.currencyTableView.rx.modelSelected(CurrencyModel.self)
+        let didPushConverterVC = PublishRelay<String>()
+        mainView.currencyTableView.rx.modelSelected(Currency.self)
             .asDriver()
-            .drive(with: self) { owner, model in
-                let currencyModel = CurrencyModel(currency: model.currency, country: model.country, rate: model.rate)
-                let converterVC = ConverterViewController(currencyModel: currencyModel)
+            .drive(with: self) { owner, currency in
+                let currency = Currency(code: currency.code,
+                                        country: currency.country,
+                                        difference: currency.difference,
+                                        rate: currency.rate,
+                                        isFavorite: currency.isFavorite)
+                let converterVC = ConverterViewController(viewModel: ConverterViewModel(currency: currency))
+                converterVC.viewWillDisappearDelegate = self
                 owner.navigationController?.pushViewController(converterVC, animated: true)
+                didPushConverterVC.accept(currency.code)
             }.disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시
-        viewModel.state.isHiddenEmptyLabel = { [weak self] isHidden in
+        viewModel.state.needToHideEmptyLabel = { [weak self] isHidden in
             self?.mainView.emptyStateLabel.isHidden = isHidden
         }
         
         // Action ➡️ ViewModel
         let action = MainViewModel.Action(
-            didBinding: Observable.just(()),
-            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable())
+            searchText: mainView.currencySearchBar.rx.text.orEmpty.asObservable(),
+            favoriteCurrency: favoriteCurrency.asObservable(),
+            didPushConverterVC: didPushConverterVC.asObservable(),
+            didBinding: Observable.just(())
+        )
         viewModel.action?(action)
     }
 }
@@ -101,9 +131,16 @@ private extension MainViewController {
 
 private extension MainViewController {
     func showFailedToLoadAlert() {
-        DispatchQueue.main.async {
-            AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
-        }
+        AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
+    }
+    // TODO: 스크롤시 키보드 올라가게 해야함
+}
+
+// MARK: - ViewWillDisappearDelegate
+
+extension MainViewController: ViewWillDisappearDelegate {
+    func notifyViewWillDisappear() {
+        viewModel.deleteLastConverterCoreData()
     }
 }
 
@@ -115,7 +152,7 @@ import SwiftUI
 struct MainViewControllerPreview: PreviewProvider {
     static var previews: some View {
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        MainViewController().toPreview()
+        MainViewController(viewModel: MainViewModel()).toPreview()
     }
 }
 #endif

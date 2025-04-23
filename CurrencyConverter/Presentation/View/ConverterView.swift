@@ -13,15 +13,15 @@ final class ConverterView: UIView {
     
     // MARK: - UI Components
     
-    private let currencyLabel = UILabel().then {
+    let codeLabel = UILabel().then {
         $0.text = "XCG"
         $0.font = .systemFont(ofSize: 24, weight: .bold)
     }
     
-    private let countryLabel = UILabel().then {
+    let countryLabel = UILabel().then {
         $0.text = "가상통화 (Crypto Generic)"
         $0.font = .systemFont(ofSize: 16)
-        $0.textColor = .gray
+        $0.textColor = .systemGray
     }
     
     private let labelStackView = UIStackView().then {
@@ -65,15 +65,6 @@ final class ConverterView: UIView {
     }
 }
 
-// MARK: - Methods
-
-extension ConverterView {
-    func configure(currencyModel: CurrencyModel) {
-        currencyLabel.text = currencyModel.currency
-        countryLabel.text = currencyModel.country
-    }
-}
-
 // MARK: - UI Methods
 
 private extension ConverterView {
@@ -91,7 +82,7 @@ private extension ConverterView {
         )
         
         labelStackView.addArrangedSubviews(
-            currencyLabel,
+            codeLabel,
             countryLabel
         )
     }
@@ -109,7 +100,7 @@ private extension ConverterView {
         // height = 44
         amountTextField.snp.makeConstraints {
             $0.top.equalTo(labelStackView.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
             $0.height.equalTo(44)
         }
         
@@ -118,7 +109,7 @@ private extension ConverterView {
         // height = 44
         convertButton.snp.makeConstraints {
             $0.top.equalTo(amountTextField.snp.bottom).offset(24)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
             $0.height.equalTo(44)
         }
         
@@ -126,7 +117,7 @@ private extension ConverterView {
         // leading, trailing = superView ± 24
         resultLabel.snp.makeConstraints {
             $0.top.equalTo(convertButton.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(24)
+            $0.leading.trailing.equalTo(self.safeAreaLayoutGuide).inset(24)
         }
     }
     

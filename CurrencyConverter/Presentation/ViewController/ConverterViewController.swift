@@ -15,14 +15,25 @@ final class ConverterViewController: UIViewController {
     
     // MARK: - Properties
     
-    private let viewModel = ConverterViewModel()
+    private let viewModel: ConverterViewModel
     private let disposeBag = DisposeBag()
     
-    private let currencyModel: CurrencyModel
+    weak var viewWillDisappearDelegate: ViewWillDisappearDelegate?
     
     // MARK: - UI Components
     
     private let converterView = ConverterView()
+    
+    // MARK: - Initializer
+    
+    init(viewModel: ConverterViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
     
@@ -36,17 +47,11 @@ final class ConverterViewController: UIViewController {
         bind()
     }
     
-    // MARK: - Initializer
-    
-    init(currencyModel: CurrencyModel) {
-        self.currencyModel = currencyModel
-        super.init(nibName: nil, bundle: nil)
-        
-        converterView.configure(currencyModel: currencyModel)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if self.isMovingFromParent {
+            viewWillDisappearDelegate?.notifyViewWillDisappear()
+        }
     }
 }
 
@@ -73,9 +78,17 @@ private extension ConverterViewController {
         // 잘못된 입력값 Alert 처리
         viewModel.state.alertMessage = { [weak self] message in
             guard let self else { return }
-            if message != "" {
+            if !message.isEmpty {
                 AlertHelper.showAlert(title: "오류", message: message, over: self)
             }
+        }
+        
+        viewModel.state.code = { [weak self] code in
+            self?.converterView.codeLabel.text = code
+        }
+        
+        viewModel.state.country = { [weak self] country in
+            self?.converterView.countryLabel.text = country
         }
         
         // 입력값에 따라 계산된 환율 표시
@@ -86,9 +99,8 @@ private extension ConverterViewController {
         // Action ➡️ ViewModel
         let action = ConverterViewModel.Action(
             buttonTapped: converterView.convertButton.rx.tap.asObservable(),
-            currency: Observable.just(currencyModel.currency),
             amountText: converterView.amountTextField.rx.text.orEmpty.asObservable(),
-            rate: Observable.just(currencyModel.rate)
+            didBinding: Observable.just(())
         )
         viewModel.action?(action)
     }
@@ -101,9 +113,14 @@ import SwiftUI
 
 struct ConverterViewControllerPreview: PreviewProvider {
     static var previews: some View {
+        let mockCurrency = Currency(code: "XCG",
+                                    country: "가상통화 (Crypto Generic)",
+                                    difference: 0.0,
+                                    rate: 1.7900,
+                                    isFavorite: false)
+        
         // {뷰 컨트롤러 인스턴스}.toPreview()
-        let model = CurrencyModel(currency: "XCG", country: "가상통화 (Crypto Generic)", rate: 1.7900)
-        ConverterViewController(currencyModel: model).toPreview()
+        ConverterViewController(viewModel: ConverterViewModel(currency: mockCurrency)).toPreview()
     }
 }
 #endif

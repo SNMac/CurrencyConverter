@@ -18,6 +18,7 @@ final class CurrencyTableView: UITableView {
         self.separatorInset.right = 16
         self.register(CurrencyCell.self, forCellReuseIdentifier: CurrencyCell.identifier)
         self.rowHeight = 60
+        self.keyboardDismissMode = .onDrag
     }
     
     required init?(coder: NSCoder) {

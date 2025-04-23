@@ -77,16 +77,22 @@ final class ConverterViewModel: ViewModelProtocol {
                     let showingAmount = String(format: "%.2f", amount)
                     let showingConverted = String(format: "%.2f", amount * currency.rate)
                     return "$\(showingAmount) → \(showingConverted) \(currency.code)"
-                }.bind(with: self) { owner, result in
+                }
+                .bind(with: self) { owner, result in
                     owner.state.convertedResult?(result)
                 }.disposed(by: disposeBag)
             
             // 바인딩 완료 이후) 화면에 표시할 데이터 전송
             action.didBinding
+                .observe(on: MainScheduler.instance)
                 .bind(with: self) { owner, _ in
-                    owner.state.code?(currency.code)
-                    owner.state.country?(currency.country)
+                    owner.state.code?(owner.currency.code)
+                    owner.state.country?(owner.currency.country)
                 }.disposed(by: disposeBag)
         }
+    }
+    
+    deinit {
+        CoreDataManager.shared.deleteLastConverter()
     }
 }

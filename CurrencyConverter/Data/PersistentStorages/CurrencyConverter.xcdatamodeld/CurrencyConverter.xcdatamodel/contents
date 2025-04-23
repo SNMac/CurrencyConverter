@@ -7,10 +7,14 @@
         <attribute name="isFavorite" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="rate" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <relationship name="exchangeRate" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ExchangeRateEntity" inverseName="currencies" inverseEntity="ExchangeRateEntity"/>
+        <relationship name="lastConverter" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="LastConverterEntity" inverseName="currency" inverseEntity="LastConverterEntity"/>
     </entity>
-    <entity name="ExchangeRateEntity" representedClassName="ExchangeRateEntity" syncable="YES" codeGenerationType="class">
+    <entity name="ExchangeRateEntity" representedClassName=".ExchangeRateEntity" syncable="YES" codeGenerationType="class">
         <attribute name="baseCode" optional="YES" attributeType="String"/>
         <attribute name="lastUpdatedUnix" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <relationship name="currencies" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CurrencyEntity" inverseName="exchangeRate" inverseEntity="CurrencyEntity"/>
+    </entity>
+    <entity name="LastConverterEntity" representedClassName="LastConverterEntity" syncable="YES" codeGenerationType="class">
+        <relationship name="currency" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CurrencyEntity" inverseName="lastConverter" inverseEntity="CurrencyEntity"/>
     </entity>
 </model>

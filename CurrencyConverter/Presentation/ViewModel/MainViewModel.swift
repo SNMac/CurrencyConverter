@@ -63,7 +63,7 @@ final class MainViewModel: ViewModelProtocol {
                 .subscribe(with: self, onNext: { owner, currency in
                     var updatedCurrency = currency
                     updatedCurrency.isFavorite.toggle()
-                    CoreDataManager.shared.updateIsFavorite(currency: updatedCurrency)
+                    CoreDataManager.shared.updateIsFavorite(code: updatedCurrency.code, isFavorite: updatedCurrency.isFavorite)
                     
                     owner.allCurrencies[updatedCurrency.code] = updatedCurrency
                     owner.filteredCurrencies[updatedCurrency.code] = updatedCurrency
@@ -103,7 +103,7 @@ final class MainViewModel: ViewModelProtocol {
 
 private extension MainViewModel {
     func loadCurrencies() {
-        var localData = CoreDataManager.shared.fetchData()
+        var localData = CoreDataManager.shared.fetchExchangeRate()
         
         dataService.loadData { [weak self] result in
             guard let self else { return }
@@ -115,17 +115,17 @@ private extension MainViewModel {
                 if let localExchangeRate = localData {
                     // Core Data에 데이터 존재 ➡️ 마지막 업데이트 시간 다르면 값 업데이트
                     if localExchangeRate.lastUpdatedUnix != remoteExchangeRate.lastUpdatedUnix {
-                        CoreDataManager.shared.updateAllData(exchangeRate: remoteExchangeRate) {
-                            guard let updatedLocal = CoreDataManager.shared.fetchData() else { return }
+                        CoreDataManager.shared.updateExchangeRate(of: remoteExchangeRate) {
+                            guard let updatedLocal = CoreDataManager.shared.fetchExchangeRate() else { return }
                             self.updateCurrencies(with: updatedLocal)
-                            localData = CoreDataManager.shared.fetchData()
+                            localData = CoreDataManager.shared.fetchExchangeRate()
                         }
                     } else {
                         updateCurrencies(with: localExchangeRate)
                     }
                 } else {
                     // Core Data가 비어있음 ➡️ 저장
-                    CoreDataManager.shared.saveData(exchangeRate: remoteExchangeRate)
+                    CoreDataManager.shared.saveExchangeRate(of: remoteExchangeRate)
                     updateCurrencies(with: remoteExchangeRate)
                 }
                 

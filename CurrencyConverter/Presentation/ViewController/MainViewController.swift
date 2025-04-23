@@ -107,6 +107,7 @@ private extension MainViewController {
                 let converterVM = ConverterViewModel(currency: currency)
                 let converterVC = ConverterViewController(viewModel: converterVM)
                 owner.navigationController?.pushViewController(converterVC, animated: true)
+                CoreDataManager.shared.saveLastConverter(currencyCode: currency.code)
             }.disposed(by: disposeBag)
         
         // 검색 결과가 없을 경우 "검색 결과 없음" 표시

@@ -22,6 +22,13 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let mainVM = MainViewModel()
         let mainVC = MainViewController(viewModel: mainVM)
         window.rootViewController = UINavigationController(rootViewController: mainVC)
+        if let lastCurrency = CoreDataManager.shared.fetchLastConverter() {
+            DispatchQueue.main.async {
+                let converterVM = ConverterViewModel(currency: lastCurrency)
+                let converterVC = ConverterViewController(viewModel: converterVM)
+                mainVC.navigationController?.pushViewController(converterVC, animated: true)
+            }
+        }
         
         window.makeKeyAndVisible()
         self.window = window

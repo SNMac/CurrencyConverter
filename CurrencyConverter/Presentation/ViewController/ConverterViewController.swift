@@ -27,6 +27,7 @@ final class ConverterViewController: UIViewController {
     init(viewModel: ConverterViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.restorationIdentifier = "ConverterViewController"
     }
     
     required init?(coder: NSCoder) {

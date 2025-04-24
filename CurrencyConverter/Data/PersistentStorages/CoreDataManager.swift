@@ -13,7 +13,7 @@ final class CoreDataManager {
     
     static let shared = CoreDataManager()
     
-    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CoreDataManager")
+    private let log = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "CoreDataManager")
     
     // MARK: - Core Data stack
     
@@ -25,12 +25,20 @@ final class CoreDataManager {
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return container
     }()
     
     private var context: NSManagedObjectContext {
         return persistentContainer.viewContext
     }
+    
+    private lazy var backgroundContext: NSManagedObjectContext = {
+        let context = persistentContainer.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }()
     
     // MARK: - Core Data Saving support
     
@@ -48,7 +56,9 @@ final class CoreDataManager {
     
     /// Core Data 비동기 작업
     func performBackgroundTask(_ block: @escaping (NSManagedObjectContext) -> Void) {
-        persistentContainer.performBackgroundTask(block)
+        backgroundContext.perform {
+            block(self.backgroundContext)
+        }
     }
 }
 
@@ -75,11 +85,11 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) ExchangeRateEntity saved", log: CoreDataManager.log, type: .debug)
+                os_log("CoreDataStorage) ExchangeRateEntity saved", log: CoreDataManager.shared.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             }
         }
     }
@@ -90,58 +100,56 @@ extension CoreDataManager {
         
         do {
             guard let exchangeRateEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataStorage) ExchangeRateEntity fetched", log: CoreDataManager.log, type: .debug)
+            os_log("CoreDataStorage) ExchangeRateEntity fetched", log: CoreDataManager.shared.log, type: .debug)
             return exchangeRateEntity.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             return nil
         }
     }
     
     /// ExchangeRate를 매개변수로 받아 CoreData에서 ExchangeRateEntity를 업데이트합니다.
     func updateExchangeRate(of exchangeRate: ExchangeRate, completion: @escaping () -> Void) {
-        performBackgroundTask { [weak self] context in
-            guard let self else { return }
-            let fetchRequest = NSFetchRequest<NSFetchRequestResult>.init(entityName: "ExchangeRateEntity")
+        performBackgroundTask { context in
+            let fetchRequest = NSFetchRequest<ExchangeRateEntity>.init(entityName: "ExchangeRateEntity")
             
             do {
-                guard let exchangeRateEntity = try context.fetch(fetchRequest).first as? ExchangeRateEntity else { return }
+                guard let exchangeRateEntity = try context.fetch(fetchRequest).first else { return }
                 exchangeRateEntity.lastUpdatedUnix = exchangeRate.lastUpdatedUnix
                 exchangeRateEntity.baseCode = exchangeRate.baseCode
                 
                 for currency in exchangeRate.currencies {
-                    if let currencyEntity = fetchCurrencyEntity(code: currency.code, in: context) {
+                    if let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: currency.code, in: context) {
                         currencyEntity.difference = currency.rate - currencyEntity.rate
                         currencyEntity.rate = currency.rate
                     }
                 }
                 try context.save()
                 DispatchQueue.main.async { completion() }
-                os_log("CoreDataStorage) ExchangeRateEntity updated", log: CoreDataManager.log, type: .debug)
+                os_log("CoreDataStorage) ExchangeRateEntity updated", log: CoreDataManager.shared.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             }
         }
     }
     
     /// CoreData에서 code에 해당하는 CurrencyEntity의 isFavorite을 업데이트합니다.
     func updateIsFavorite(code: String, isFavorite: Bool) {
-        performBackgroundTask { [weak self] context in
-            guard let self else { return }
-            guard let currencyEntity = fetchCurrencyEntity(code: code, in: context) else { return }
+        performBackgroundTask { context in
+            guard let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: code, in: context) else { return }
             currencyEntity.isFavorite = isFavorite
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) CurrencyEntity updated: %@", log: CoreDataManager.log, type: .debug, "\(currencyEntity.toDomain())")
+                os_log("CoreDataStorage) CurrencyEntity updated: %@", log: CoreDataManager.shared.log, type: .debug, "\(currencyEntity.toDomain())")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             }
         }
     }
@@ -157,7 +165,7 @@ extension CoreDataManager {
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             
             return nil
         }
@@ -169,21 +177,19 @@ extension CoreDataManager {
 extension CoreDataManager {
     /// LastConverterEntity를 생성하고, 인자로 받은 Currency에 해당하는 CurrencyEntity와 연결 후 Core Data에 저장합니다.
     func saveLastConverter(currencyCode: String) {
-        performBackgroundTask { [weak self] context in
-            guard let self else { return }
-            
+        performBackgroundTask { context in
             let lastConverterEntity = LastConverterEntity(context: context)
-            let currencyEntity = fetchCurrencyEntity(code: currencyCode, in: context)
+            let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: currencyCode, in: context)
             lastConverterEntity.currency = currencyEntity
             currencyEntity?.lastConverter = lastConverterEntity
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) LastConverterEntity saved: %@", log: CoreDataManager.log, type: .debug, currencyCode)
+                os_log("CoreDataStorage) LastConverterEntity saved: %@", log: CoreDataManager.shared.log, type: .debug, currencyCode)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             }
         }
     }
@@ -194,12 +200,12 @@ extension CoreDataManager {
         
         do {
             guard let lastConverterEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataStorage) LastConverterEntity fetched", log: CoreDataManager.log, type: .debug)
+            os_log("CoreDataStorage) LastConverterEntity fetched", log: CoreDataManager.shared.log, type: .debug)
             return lastConverterEntity.currency?.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             return nil
         }
     }
@@ -207,15 +213,16 @@ extension CoreDataManager {
     /// Core Data에서 LastConverterEntity를 삭제합니다.
     func deleteLastConverter() {
         performBackgroundTask { context in
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>.init(entityName: "LastConverterEntity")
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        let fetchRequest = NSFetchRequest<LastConverterEntity>.init(entityName: "LastConverterEntity")
             
             do {
-                try context.execute(deleteRequest)
-                os_log("CoreDataStorage) LastConverterEntity deleted", log: CoreDataManager.log, type: .debug)
+                let results = try context.fetch(fetchRequest)
+                results.forEach { context.delete($0) }
+                try context.save()
+                os_log("CoreDataStorage) LastConverterEntity deleted", log: CoreDataManager.shared.log, type: .debug)
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.log, type: .error, msg)
+                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
             }
         }
     }

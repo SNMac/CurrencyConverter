@@ -26,11 +26,12 @@ final class DataService {
     func loadData(completion: @escaping (Result<ExchangeRate, Error>) -> Void) {
         networkService.fetchData { [weak self] result in
             guard let self else { return }
+            
             switch result {
             case .success(let data):
                 /* ---------- 상승 하락 테스트 코드 ---------- */
 //                guard let path = Bundle.main.path(forResource: "mock", ofType: "json") else {
-//                    os_log("🚨 JSON 파일을 찾을 수 없음", log: self.log, type: .error)
+//                    os_log(.error, log: self.log, "🚨 JSON 파일을 찾을 수 없음")
 //                    completion(.failure(DataError.fileNotFound))
 //                    return
 //                }
@@ -42,17 +43,17 @@ final class DataService {
                 
                 do {
                     let exchangeRateDTO = try JSONDecoder().decode(ExchangeRateDTO.self, from: data)
-                    os_log("exchangeRate: %@", log: log, type: .debug, "\(exchangeRateDTO)")
+                    os_log(.debug, log: self.log, "exchangeRate: %@", "\(exchangeRateDTO)")
                     completion(.success(exchangeRateDTO.toDomain()))
                 } catch {
                     let message = DataError.parsingFailed.rawValue + ": \(error)"
-                    os_log("%@", log: log, type: .error, message)
+                    os_log(.error, log: self.log, "%@", message)
                     completion(.failure(DataError.parsingFailed))
                 }
                 
             case .failure(_):
                 let message = DataError.fileNotFound.rawValue
-                os_log("%@", log: self.log, type: .error, message)
+                os_log(.error, log: self.log, "%@", message)
                 completion(.failure(DataError.fileNotFound))
             }
         }

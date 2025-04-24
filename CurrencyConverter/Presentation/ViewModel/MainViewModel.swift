@@ -83,7 +83,7 @@ final class MainViewModel: ViewModelProtocol {
                         $0.value.code.hasPrefix(searchText.uppercased()) ||
                         $0.value.country.lowercased().contains(searchText.lowercased())
                     }
-                    os_log("filteredCurrencies.count: %d", log: owner.log, type: .debug, owner.filteredCurrencies.values.count)
+                    os_log(.debug, log: owner.log, "filteredCurrencies.count: %d", owner.filteredCurrencies.values.count)
                     owner.acceptSortedCurrencies()
                     
                     // 검색 결과가 없을 경우 "검색 결과 없음" 표시

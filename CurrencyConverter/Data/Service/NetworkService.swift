@@ -26,7 +26,7 @@ final class NetworkService {
 //        guard let url: URL = URL(string: "https://open.er-api.com/v6/latest/TESTING") else {  // Alert 테스트
         guard let url: URL = URL(string: "https://open.er-api.com/v6/latest/USD") else {
             let message = NetworkError.invalidURL.rawValue
-            os_log("%@", log: self.log, type: .error, message)
+            os_log(.error, log: log, "%@", message)
             completion(.failure(NetworkError.invalidURL))
             return
         }
@@ -45,15 +45,15 @@ final class NetworkService {
             }
             
             if let response: HTTPURLResponse = response as? HTTPURLResponse {
-                os_log("status code: %d", log: self.log, type: .debug, response.statusCode)
+                os_log(.debug, "status code: %d", response.statusCode)
                 
                 if successRange.contains(response.statusCode) {
-                    os_log("data: %@", log: self.log, type: .debug, "\(data)")
+                    os_log(.debug, "data: %@", "\(data)")
                     completion(.success(data))
                     
                 } else {
                     let message = NetworkError.requestFailed.rawValue
-                    os_log("%@", log: self.log, type: .error, message)
+                    os_log(.error, "%@", message)
                     completion(.failure(NetworkError.requestFailed))
                 }
             }

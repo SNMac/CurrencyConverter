@@ -80,11 +80,11 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataManager) ExchangeRateEntity saved", log: self.log, type: .debug)
+                os_log(.debug, log: self.log, "CoreDataManager) ExchangeRateEntity saved")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: self.log, type: .error, msg)
+                os_log(.error, log: self.log, "error: %@", msg)
             }
         }
     }
@@ -95,12 +95,12 @@ extension CoreDataManager {
         
         do {
             guard let exchangeRateEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataManager) ExchangeRateEntity fetched", log: log, type: .debug)
+            os_log(.debug, log: log, "CoreDataManager) ExchangeRateEntity fetched")
             return exchangeRateEntity.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: log, type: .error, msg)
+            os_log(.error, log: log, "error: %@", msg)
             return nil
         }
     }
@@ -125,11 +125,11 @@ extension CoreDataManager {
                 }
                 try context.save()
                 DispatchQueue.main.async { completion() }
-                os_log("CoreDataManager) ExchangeRateEntity updated", log: self.log, type: .debug)
+                os_log(.debug, log: self.log, "CoreDataManager) ExchangeRateEntity updated")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: self.log, type: .error, msg)
+                os_log(.error, log: self.log, "error: %@", msg)
             }
         }
     }
@@ -144,11 +144,11 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataManager) CurrencyEntity updated: %@", log: self.log, type: .debug, "\(currencyEntity.toDomain())")
+                os_log(.debug, log: self.log, "CoreDataManager) CurrencyEntity updated: %@", "\(currencyEntity.toDomain())")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: self.log, type: .error, msg)
+                os_log(.error, log: self.log, "error: %@", msg)
             }
         }
     }
@@ -164,7 +164,7 @@ extension CoreDataManager {
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: log, type: .error, msg)
+            os_log(.error, log: log, "error: %@", msg)
             
             return nil
         }
@@ -186,11 +186,12 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataManager) LastConverterEntity saved: %@", log: self.log, type: .debug, currencyCode)
+                os_log(.debug, log: self.log, "CoreDataManager) LastConverterEntity saved: %@", currencyCode)
+                
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: self.log, type: .error, msg)
+                os_log(.error, log: self.log, "error: %@", msg)
             }
         }
     }
@@ -201,12 +202,12 @@ extension CoreDataManager {
         
         do {
             guard let lastConverterEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataManager) LastConverterEntity fetched", log: log, type: .debug)
+            os_log(.debug, log: log, "CoreDataManager) LastConverterEntity fetched")
             return lastConverterEntity.currency?.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: log, type: .error, msg)
+            os_log(.error, log: log, "error: %@", msg)
             return nil
         }
     }
@@ -222,11 +223,11 @@ extension CoreDataManager {
                 let results = try context.fetch(fetchRequest)
                 results.forEach { self.context.delete($0) }
                 try context.save()
-                os_log("CoreDataManager) LastConverterEntity deleted", log: self.log, type: .debug)
+                os_log(.debug, log: self.log, "CoreDataManager) LastConverterEntity deleted")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: self.log, type: .error, msg)
+                os_log(.error, log: self.log, "error: %@", msg)
             }
         }
     }

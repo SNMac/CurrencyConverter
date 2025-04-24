@@ -53,13 +53,6 @@ final class CoreDataManager {
             }
         }
     }
-    
-    /// Core Data 비동기 작업
-    func performBackgroundTask(_ block: @escaping (NSManagedObjectContext) -> Void) {
-        backgroundContext.perform {
-            block(self.backgroundContext)
-        }
-    }
 }
 
 // MARK: - ExchangeRate CRUD Methods
@@ -67,7 +60,9 @@ final class CoreDataManager {
 extension CoreDataManager {
     /// ExchangeRate을 매개변수로 받아 ExchangeRateEntity로 변환 후 Core Data에 저장합니다.
     func saveExchangeRate(of exchangeRate: ExchangeRate) {
-        performBackgroundTask { context in
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            
             let exchangeRateEntity = ExchangeRateEntity(context: context)
             exchangeRateEntity.lastUpdatedUnix = exchangeRate.lastUpdatedUnix
             exchangeRateEntity.baseCode = exchangeRate.baseCode
@@ -85,11 +80,11 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataManager) ExchangeRateEntity saved", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) ExchangeRateEntity saved", log: self.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+                os_log("error: %@", log: self.log, type: .error, msg)
             }
         }
     }
@@ -100,19 +95,21 @@ extension CoreDataManager {
         
         do {
             guard let exchangeRateEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataManager) ExchangeRateEntity fetched", log: CoreDataManager.shared.log, type: .debug)
+            os_log("CoreDataManager) ExchangeRateEntity fetched", log: log, type: .debug)
             return exchangeRateEntity.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+            os_log("error: %@", log: log, type: .error, msg)
             return nil
         }
     }
     
     /// ExchangeRate를 매개변수로 받아 CoreData에서 ExchangeRateEntity를 업데이트합니다.
     func updateExchangeRate(of exchangeRate: ExchangeRate, completion: @escaping () -> Void) {
-        performBackgroundTask { context in
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            
             let fetchRequest = NSFetchRequest<ExchangeRateEntity>.init(entityName: "ExchangeRateEntity")
             
             do {
@@ -121,35 +118,37 @@ extension CoreDataManager {
                 exchangeRateEntity.baseCode = exchangeRate.baseCode
                 
                 for currency in exchangeRate.currencies {
-                    if let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: currency.code, in: context) {
+                    if let currencyEntity = self.fetchCurrencyEntity(code: currency.code, in: context) {
                         currencyEntity.difference = currency.rate - currencyEntity.rate
                         currencyEntity.rate = currency.rate
                     }
                 }
                 try context.save()
                 DispatchQueue.main.async { completion() }
-                os_log("CoreDataManager) ExchangeRateEntity updated", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) ExchangeRateEntity updated", log: self.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+                os_log("error: %@", log: self.log, type: .error, msg)
             }
         }
     }
     
     /// CoreData에서 code에 해당하는 CurrencyEntity의 isFavorite을 업데이트합니다.
     func updateIsFavorite(code: String, isFavorite: Bool) {
-        performBackgroundTask { context in
-            guard let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: code, in: context) else { return }
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            
+            guard let currencyEntity = self.fetchCurrencyEntity(code: code, in: context) else { return }
             currencyEntity.isFavorite = isFavorite
             
             do {
                 try context.save()
-                os_log("CoreDataManager) CurrencyEntity updated: %@", log: CoreDataManager.shared.log, type: .debug, "\(currencyEntity.toDomain())")
+                os_log("CoreDataManager) CurrencyEntity updated: %@", log: self.log, type: .debug, "\(currencyEntity.toDomain())")
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+                os_log("error: %@", log: self.log, type: .error, msg)
             }
         }
     }
@@ -165,7 +164,7 @@ extension CoreDataManager {
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+            os_log("error: %@", log: log, type: .error, msg)
             
             return nil
         }
@@ -177,19 +176,21 @@ extension CoreDataManager {
 extension CoreDataManager {
     /// LastConverterEntity를 생성하고, 인자로 받은 Currency에 해당하는 CurrencyEntity와 연결 후 Core Data에 저장합니다.
     func saveLastConverter(currencyCode: String) {
-        performBackgroundTask { context in
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            
             let lastConverterEntity = LastConverterEntity(context: context)
-            let currencyEntity = CoreDataManager.shared.fetchCurrencyEntity(code: currencyCode, in: context)
+            let currencyEntity = self.fetchCurrencyEntity(code: currencyCode, in: context)
             lastConverterEntity.currency = currencyEntity
             currencyEntity?.lastConverter = lastConverterEntity
             
             do {
                 try context.save()
-                os_log("CoreDataManager) LastConverterEntity saved: %@", log: CoreDataManager.shared.log, type: .debug, currencyCode)
+                os_log("CoreDataManager) LastConverterEntity saved: %@", log: self.log, type: .debug, currencyCode)
                 
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+                os_log("error: %@", log: self.log, type: .error, msg)
             }
         }
     }
@@ -200,29 +201,32 @@ extension CoreDataManager {
         
         do {
             guard let lastConverterEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataManager) LastConverterEntity fetched", log: CoreDataManager.shared.log, type: .debug)
+            os_log("CoreDataManager) LastConverterEntity fetched", log: log, type: .debug)
             return lastConverterEntity.currency?.toDomain()
             
         } catch {
             let msg = error.localizedDescription
-            os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+            os_log("error: %@", log: log, type: .error, msg)
             return nil
         }
     }
     
     /// Core Data에서 LastConverterEntity를 삭제합니다.
     func deleteLastConverter() {
-        performBackgroundTask { context in
-        let fetchRequest = NSFetchRequest<LastConverterEntity>.init(entityName: "LastConverterEntity")
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            
+            let fetchRequest = NSFetchRequest<LastConverterEntity>.init(entityName: "LastConverterEntity")
             
             do {
                 let results = try context.fetch(fetchRequest)
-                results.forEach { context.delete($0) }
+                results.forEach { self.context.delete($0) }
                 try context.save()
-                os_log("CoreDataManager) LastConverterEntity deleted", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) LastConverterEntity deleted", log: self.log, type: .debug)
+                
             } catch {
                 let msg = error.localizedDescription
-                os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)
+                os_log("error: %@", log: self.log, type: .error, msg)
             }
         }
     }

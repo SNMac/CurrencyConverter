@@ -83,10 +83,12 @@ private extension ConverterViewController {
             }
         }
         
+        // 통화 코드 표시
         viewModel.state.code = { [weak self] code in
             self?.converterView.codeLabel.text = code
         }
         
+        // 국가명 표시
         viewModel.state.country = { [weak self] country in
             self?.converterView.countryLabel.text = country
         }

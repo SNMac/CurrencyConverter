@@ -85,7 +85,7 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) ExchangeRateEntity saved", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) ExchangeRateEntity saved", log: CoreDataManager.shared.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
@@ -100,7 +100,7 @@ extension CoreDataManager {
         
         do {
             guard let exchangeRateEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataStorage) ExchangeRateEntity fetched", log: CoreDataManager.shared.log, type: .debug)
+            os_log("CoreDataManager) ExchangeRateEntity fetched", log: CoreDataManager.shared.log, type: .debug)
             return exchangeRateEntity.toDomain()
             
         } catch {
@@ -128,7 +128,7 @@ extension CoreDataManager {
                 }
                 try context.save()
                 DispatchQueue.main.async { completion() }
-                os_log("CoreDataStorage) ExchangeRateEntity updated", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) ExchangeRateEntity updated", log: CoreDataManager.shared.log, type: .debug)
                 
             } catch {
                 let msg = error.localizedDescription
@@ -145,7 +145,7 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) CurrencyEntity updated: %@", log: CoreDataManager.shared.log, type: .debug, "\(currencyEntity.toDomain())")
+                os_log("CoreDataManager) CurrencyEntity updated: %@", log: CoreDataManager.shared.log, type: .debug, "\(currencyEntity.toDomain())")
                 
             } catch {
                 let msg = error.localizedDescription
@@ -185,7 +185,7 @@ extension CoreDataManager {
             
             do {
                 try context.save()
-                os_log("CoreDataStorage) LastConverterEntity saved: %@", log: CoreDataManager.shared.log, type: .debug, currencyCode)
+                os_log("CoreDataManager) LastConverterEntity saved: %@", log: CoreDataManager.shared.log, type: .debug, currencyCode)
                 
             } catch {
                 let msg = error.localizedDescription
@@ -200,7 +200,7 @@ extension CoreDataManager {
         
         do {
             guard let lastConverterEntity = try context.fetch(fetchRequest).first else { return nil }
-            os_log("CoreDataStorage) LastConverterEntity fetched", log: CoreDataManager.shared.log, type: .debug)
+            os_log("CoreDataManager) LastConverterEntity fetched", log: CoreDataManager.shared.log, type: .debug)
             return lastConverterEntity.currency?.toDomain()
             
         } catch {
@@ -219,7 +219,7 @@ extension CoreDataManager {
                 let results = try context.fetch(fetchRequest)
                 results.forEach { context.delete($0) }
                 try context.save()
-                os_log("CoreDataStorage) LastConverterEntity deleted", log: CoreDataManager.shared.log, type: .debug)
+                os_log("CoreDataManager) LastConverterEntity deleted", log: CoreDataManager.shared.log, type: .debug)
             } catch {
                 let msg = error.localizedDescription
                 os_log("error: %@", log: CoreDataManager.shared.log, type: .error, msg)

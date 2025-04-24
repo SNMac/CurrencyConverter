@@ -133,7 +133,6 @@ private extension MainViewController {
     func showFailedToLoadAlert() {
         AlertHelper.showAlert(title: "오류", message: "데이터를 불러올 수 없습니다.", over: self)
     }
-    // TODO: 스크롤시 키보드 올라가게 해야함
 }
 
 // MARK: - ViewWillDisappearDelegate
